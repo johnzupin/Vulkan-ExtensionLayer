@@ -1,0 +1,14 @@
+Source: vulkan-extensionlayer
+Section: graphics
+Priority: optional
+Maintainer: John Zupin <johnz@lunarg.com>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.1.2
+Homepage: https://github.com/KhronosGroup/Vulkan-ExtensionLayer
+Vcs-Git: https://github.com/KhronosGroup/Vulkan-ExtensionLayer.git
+Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/vulkan-extensionlayer
+
+Package: vulkan-extensionlayer
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Layers providing Vulkan features when native support is unavailable

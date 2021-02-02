@@ -1,0 +1,5 @@
+vulkan-extensionlayer (20200202-master-1) unstable; urgency=medium
+
+  * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
+
+ -- John Zupin <johnz@lunarg.com>  Tue, 02 Feb 2021 15:48:34 -0700

@@ -1,2 +1,2 @@
 usr/lib/x86_64-linux-gnu/libVkLayer_khronos_synchronization2.so
-usr/share/vulkan/explicit_layer.d
+usr/share/vulkan/explicit_layer.d/VkLayer_khronos_synchronization2.json

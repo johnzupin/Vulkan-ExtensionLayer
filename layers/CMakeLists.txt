@@ -70,16 +70,16 @@ if(WIN32)
 
         add_library(VkLayer_${target} SHARED ${ARGN} VkLayer_${target}.def)
         target_compile_definitions(VkLayer_${target} PUBLIC ${LAYER_COMPILE_DEFINITIONS})
-	target_link_libraries(VkLayer_${target} PRIVATE VkExtLayer_utils)
-	add_dependencies(VkLayer_${target} VkExtLayer_utils)
+        target_link_libraries(VkLayer_${target} PRIVATE VkExtLayer_utils)
+        add_dependencies(VkLayer_${target} VkExtLayer_utils)
         install(TARGETS VkLayer_${target} DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endmacro()
 elseif(APPLE)
     macro(AddVkLayer target LAYER_COMPILE_DEFINITIONS)
         add_library(VkLayer_${target} SHARED ${ARGN})
         target_compile_definitions(VkLayer_${target} PUBLIC ${LAYER_COMPILE_DEFINITIONS})
-	target_link_libraries(VkLayer_${target} PRIVATE VkExtLayer_utils)
-	add_dependencies(VkLayer_${target} VkExtLayer_utils)
+        target_link_libraries(VkLayer_${target} PRIVATE VkExtLayer_utils)
+        add_dependencies(VkLayer_${target} VkExtLayer_utils)
         set_target_properties(VkLayer_${target}
                               PROPERTIES LINK_FLAGS
                                          "-Wl"
@@ -91,8 +91,8 @@ else(UNIX AND NOT APPLE) # i.e.: Linux
     macro(AddVkLayer target LAYER_COMPILE_DEFINITIONS)
         add_library(VkLayer_${target} SHARED ${ARGN})
         target_compile_definitions(VkLayer_${target} PUBLIC ${LAYER_COMPILE_DEFINITIONS})
-	target_link_libraries(VkLayer_${target} PRIVATE VkExtLayer_utils)
-	add_dependencies(VkLayer_${target} VkExtLayer_utils)
+        target_link_libraries(VkLayer_${target} PRIVATE VkExtLayer_utils)
+        add_dependencies(VkLayer_${target} VkExtLayer_utils)
         set_target_properties(VkLayer_${target} PROPERTIES LINK_FLAGS "-Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/libVkLayer_${target}.map,-Bsymbolic,--exclude-libs,ALL")
         install(TARGETS VkLayer_${target} DESTINATION ${CMAKE_INSTALL_LIBDIR})
     endmacro()
@@ -101,7 +101,7 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
                     ${PROJECT_SOURCE_DIR}/utils
                     ${PROJECT_SOURCE_DIR}/utils/generated
-		    ${VulkanHeaders_INCLUDE_DIRS})
+                    ${VulkanHeaders_INCLUDE_DIRS})
 
 if(WIN32)
     # Applies to all configurations
@@ -119,12 +119,6 @@ else()
     # Use of pthread_condattr_setclock requires a "recent" POSIX setting.
     add_definitions(-D_POSIX_C_SOURCE=200112)
 endif()
-
-# Clang warns about unused const variables. Generated files may purposely contain unused consts, so silence this warning in Clang
-if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-    set_source_files_properties(parameter_validation.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-const-variable")
-endif()
-
 
 if(NOT WIN32)
 set(TIMELINE_SEMAPHORE_FILES
@@ -149,12 +143,13 @@ string(REPLACE "\\"
                RELATIVE_PATH_PREFIX
                "${RELATIVE_PATH_PREFIX}")
 
+set(vk_full_version "1.2.${vk_header_version}")
 # Run each .json.in file through the generator We need to create the generator.cmake script so that the generator can be run at
 # compile time, instead of configure time Running at compile time lets us use cmake generator expressions (TARGET_FILE_NAME and
 # TARGET_FILE_DIR, specifically)
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/generator.cmake" "configure_file(\"\${INPUT_FILE}\" \"\${OUTPUT_FILE}\")")
 foreach(TARGET_NAME ${TARGET_NAMES})
-    set(CONFIG_DEFINES -DINPUT_FILE="${CMAKE_CURRENT_SOURCE_DIR}/json/${TARGET_NAME}.json.in" -DVK_VERSION=1.2.${vk_header_version})
+	set(CONFIG_DEFINES -DINPUT_FILE="${CMAKE_CURRENT_SOURCE_DIR}/json/${TARGET_NAME}.json.in" -DVK_VERSION=${vk_full_version})
     # If this json file is not a metalayer, get the needed properties from that target
     if(TARGET ${TARGET_NAME})
         set(CONFIG_DEFINES
@@ -177,7 +172,7 @@ if(UNIX)
         set(INSTALL_DEFINES
             -DINPUT_FILE="${CMAKE_CURRENT_SOURCE_DIR}/json/${TARGET_NAME}.json.in"
             -DOUTPUT_FILE="${CMAKE_CURRENT_BINARY_DIR}/staging-json/${TARGET_NAME}.json"
-            -DVK_VERSION=1.1.${vk_header_version})
+            -DVK_VERSION=${vk_full_version})
         # If this json file is not a metalayer, get the needed properties from that target
         if(TARGET ${TARGET_NAME})
             set(INSTALL_DEFINES ${INSTALL_DEFINES} -DRELATIVE_LAYER_BINARY="$<TARGET_FILE_NAME:${TARGET_NAME}>")

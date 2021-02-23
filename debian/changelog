@@ -1,3 +1,15 @@
+vulkan-extensionlayer (1.2.170.0~rc2-1lunarg18.04-1) bionic; urgency=medium
+
+  [ sfricke-samsung ]
+  * Update documentation
+  * Clean up build flow
+  * Fix layers to load with Explicit Android Layer
+
+  [ Jeremy Gebben ]
+  * layers: Fix json VK_VERSION in the install target
+
+ -- John Zupin <john@odin>  Tue, 23 Feb 2021 16:23:12 -0700
+
 vulkan-extensionlayer (1.2.170.0~rc1-1lunarg18.04-1) bionic; urgency=medium
 
   * UNRELEASED

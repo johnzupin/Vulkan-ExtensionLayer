@@ -1,4 +1,4 @@
-vulkan-extensionlayer (20200202-master-1) unstable; urgency=medium
+vulkan-extensionlayer (1.2.000.0~rc1) unstable; urgency=medium
 
   * Initial release (Closes: #nnnn)  <nnnn is the bug number of your ITP>
 

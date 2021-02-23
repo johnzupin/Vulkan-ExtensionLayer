@@ -1,9 +1,9 @@
 
 ;;;; Begin Copyright Notice ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; Copyright (c) 2015-2019, 2021 The Khronos Group Inc.
-; Copyright (c) 2015-2019, 2021 Valve Corporation
-; Copyright (c) 2015-2019, 2021 LunarG, Inc.
+; Copyright (c) 2015-2021 The Khronos Group Inc.
+; Copyright (c) 2015-2021 Valve Corporation
+; Copyright (c) 2015-2021 LunarG, Inc.
 ; Copyright (c) 2020      Intel Corporation
 ;
 ; Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,12 +18,12 @@
 ; See the License for the specific language governing permissions and
 ; limitations under the License.
 ;
-;  Author: Lionel Landwerlin <lionel.g.landwerlin@intel.com>
+;  Author: Jeremy Gebben <jeremyg@lunarg.com>
 ;
 ;;;;  End Copyright Notice ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-LIBRARY VkLayer_khronos_timeline_semaphore
+LIBRARY VkLayer_khronos_synchronization2
 EXPORTS
 vkGetInstanceProcAddr
 vkGetDeviceProcAddr
-vkEnumerateInstanceExtensionProperties
+vkNegotiateLoaderLayerInterfaceVersion

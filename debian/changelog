@@ -1,3 +1,29 @@
+vulkan-extensionlayer (1.2.170.0~rc3-1lunarg18.04-1) bionic; urgency=medium
+
+  [ sfricke-samsung ]
+  * Add Android Assert support
+  * Update Android usage of sync2 layer
+  * Fix hooking into the Android Loader
+  * Make Sync2 friendly for 1.0 and 1.1 devices
+
+  [ Jeremy Gebben ]
+  * synchronization2: Query for features used in vkQueueSubmit2KHR
+
+  [ sfricke-samsung ]
+  * sync2: Fix small sType typo
+
+  [ John Zupin ]
+  * packaging: remove README.Debian and update copyright
+  * packaging: add package dependency for libvulkan1
+
+  [ Jeremy Gebben ]
+  * synchronization2: Handle GetPhysicalDeviceFeatures2 == nullptr
+  * synchronization2: Handle CreateRenderpass2 == nullptr
+  * tests: Add Sync2CompatTest.Vulkan10
+  * docs: Add Vulkan 1.0 compabibility statement
+
+ -- John Zupin <john@odin>  Thu, 25 Feb 2021 15:28:05 -0700
+
 vulkan-extensionlayer (1.2.170.0~rc2-1lunarg18.04-1) bionic; urgency=medium
 
   [ sfricke-samsung ]

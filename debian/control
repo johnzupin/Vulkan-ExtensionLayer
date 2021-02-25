@@ -12,5 +12,5 @@ Vcs-Browser: https://anonscm.debian.org/cgit/collab-maint/vulkan-extensionlayer
 
 Package: vulkan-extensionlayer
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, libvulkan1 (>= 1.2.170.0~rc1)
 Description: Layers providing Vulkan features when native support is unavailable

@@ -18,16 +18,16 @@
  * Author: Jeremy Gebben <jeremyg@lunarg.com>
  */
 #include <vulkan/vk_layer.h>
-#include <cassert>
 #include <ctype.h>
 #include <cstring>
-#include <iostream>
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include "synchronization2.h"
 #include "allocator.h"
+#include "log.h"
 #include "vk_format_utils.h"
 #include "vk_layer_config.h"
 #include "vk_safe_struct.h"
@@ -179,8 +179,6 @@ static std::shared_ptr<DeviceData> GetDeviceData(const void* object) {
 
 VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char* pLayerName, uint32_t* pPropertyCount,
                                             VkExtensionProperties* pProperties) {
-    auto instance_data = GetInstanceData(physicalDevice);
-
     if (pLayerName && strncmp(pLayerName, kGlobalLayer.layerName, VK_MAX_EXTENSION_NAME_SIZE) == 0) {
         if (!pProperties) {
             *pPropertyCount = 1;
@@ -192,8 +190,12 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevi
         pProperties[0] = kDeviceExtension;
         *pPropertyCount = 1;
         return VK_SUCCESS;
+    } else {
+        // Only call down if not the layer
+        // Android will pass a null physicalDevice with the layer name so can't get instance data from it
+        auto instance_data = GetInstanceData(physicalDevice);
+        return instance_data->vtable.EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, pPropertyCount, pProperties);
     }
-    return instance_data->vtable.EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, pPropertyCount, pProperties);
 }
 
 static void CheckDeviceFeatures(PhysicalDeviceData &pdd, VkPhysicalDeviceFeatures2* pFeatures) {
@@ -216,7 +218,9 @@ VKAPI_ATTR void VKAPI_CALL GetPhysicalDeviceFeatures2(VkPhysicalDevice physicalD
     auto instance_data = GetInstanceData(physicalDevice);
     auto pdd = instance_data->GetPhysicalDeviceData(physicalDevice);
 
-    instance_data->vtable.GetPhysicalDeviceFeatures2(physicalDevice, pFeatures);
+    if (instance_data->vtable.GetPhysicalDeviceFeatures2 != nullptr) {
+        instance_data->vtable.GetPhysicalDeviceFeatures2(physicalDevice, pFeatures);
+    }
 
     CheckDeviceFeatures(*pdd, pFeatures);
 }
@@ -225,7 +229,9 @@ VKAPI_ATTR void VKAPI_CALL GetPhysicalDeviceFeatures2KHR(VkPhysicalDevice physic
     auto instance_data = GetInstanceData(physicalDevice);
     auto pdd = instance_data->GetPhysicalDeviceData(physicalDevice);
 
-    instance_data->vtable.GetPhysicalDeviceFeatures2KHR(physicalDevice, pFeatures);
+    if (instance_data->vtable.GetPhysicalDeviceFeatures2KHR != nullptr) {
+        instance_data->vtable.GetPhysicalDeviceFeatures2KHR(physicalDevice, pFeatures);
+    }
 
     CheckDeviceFeatures(*pdd, pFeatures);
 }
@@ -241,6 +247,7 @@ InstanceData::InstanceData(VkInstance inst, PFN_vkGetInstanceProcAddr gpa, const
     INIT_HOOK(vtable, instance, EnumerateDeviceExtensionProperties);
     INIT_HOOK(vtable, instance, GetPhysicalDeviceFeatures2);
     INIT_HOOK(vtable, instance, GetPhysicalDeviceFeatures2KHR);
+    INIT_HOOK(vtable, instance, GetPhysicalDeviceProperties);
 }
 #undef INIT_HOOK
 
@@ -249,7 +256,7 @@ static VkLayerInstanceCreateInfo* GetChainInfo(const VkInstanceCreateInfo* pCrea
     while (chain_info && !(chain_info->sType == VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO && chain_info->function == func)) {
         chain_info = reinterpret_cast<VkLayerInstanceCreateInfo*>(const_cast<void*>(chain_info->pNext));
     }
-    assert(chain_info != NULL);
+    ASSERT(chain_info != NULL);
     return chain_info;
 }
 
@@ -260,7 +267,7 @@ VkResult EnumerateAll(std::vector<T>* vect, std::function<VkResult(uint32_t*, T*
     do {
         uint32_t count = 0;
         result = func(&count, nullptr);
-        assert(result == VK_SUCCESS);
+        ASSERT(result == VK_SUCCESS);
         vect->resize(count);
         result = func(&count, vect->data());
     } while (result == VK_INCOMPLETE);
@@ -270,7 +277,7 @@ VkResult EnumerateAll(std::vector<T>* vect, std::function<VkResult(uint32_t*, T*
 VKAPI_ATTR VkResult VKAPI_CALL CreateInstance(const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkInstance* pInstance) {
     VkLayerInstanceCreateInfo* chain_info = GetChainInfo(pCreateInfo, VK_LAYER_LINK_INFO);
 
-    assert(chain_info->u.pLayerInfo);
+    ASSERT(chain_info->u.pLayerInfo);
     auto gpa = chain_info->u.pLayerInfo->pfnNextGetInstanceProcAddr;
     auto create_instance = reinterpret_cast<PFN_vkCreateInstance>(gpa(NULL, "vkCreateInstance"));
     if (create_instance == NULL) {
@@ -291,6 +298,7 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateInstance(const VkInstanceCreateInfo* pCreat
         instance_data_map.insert(DispatchKey(*pInstance), instance_data);
 
         instance_data->force_enable = GetForceEnable();
+        instance_data->api_version = pCreateInfo->pApplicationInfo ? pCreateInfo->pApplicationInfo->apiVersion : 0;
         SetupCustomStypes();
     } catch (const std::bad_alloc&) {
         auto destroy_instance = reinterpret_cast<PFN_vkDestroyInstance>(gpa(NULL, "vkDestroyInstance"));
@@ -306,6 +314,7 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumeratePhysicalDevices(VkInstance instance, uin
         instance_data->vtable.EnumeratePhysicalDevices(instance_data->instance, pPhysicalDeviceCount, pPhysicalDevices);
     if (result == VK_SUCCESS && pPhysicalDevices != nullptr) {
         for (uint32_t i = 0; i < *pPhysicalDeviceCount; i++) {
+            VkPhysicalDeviceProperties properties{};
             auto physical_device = pPhysicalDevices[i];
 
             if (instance_data->physical_device_map.find(physical_device) != instance_data->physical_device_map.end()) {
@@ -313,6 +322,10 @@ VKAPI_ATTR VkResult VKAPI_CALL EnumeratePhysicalDevices(VkInstance instance, uin
             }
             auto pdd = std::make_shared<PhysicalDeviceData>();
             pdd->physical_device = physical_device;
+
+            instance_data->vtable.GetPhysicalDeviceProperties(physical_device, &properties);
+            pdd->api_version = properties.apiVersion;
+
             instance_data->physical_device_map.insert(physical_device, pdd);
         }
     }
@@ -332,6 +345,9 @@ VKAPI_ATTR void VKAPI_CALL DestroyInstance(VkInstance instance, const VkAllocati
 }
 
 #define INIT_HOOK(_vt, _dev, fn) _vt.fn = reinterpret_cast<PFN_vk##fn>(vtable.GetDeviceProcAddr(_dev, "vk" #fn))
+#define INIT_HOOK_ALIAS(_vt, _dev, fn, fn_alias) \
+    _vt.fn_alias = (_vt.fn_alias != nullptr) ? _vt.fn_alias : reinterpret_cast<PFN_vk##fn>(vtable.GetDeviceProcAddr(_dev, "vk" #fn))
+
 DeviceData::DeviceData(VkDevice device, PFN_vkGetDeviceProcAddr gpa, const DeviceFeatures& feat, bool enable,
                        const VkAllocationCallbacks* alloc)
     : device(device), allocator(alloc), features(feat), enable_layer(enable), image_map() {
@@ -347,29 +363,47 @@ DeviceData::DeviceData(VkDevice device, PFN_vkGetDeviceProcAddr gpa, const Devic
         INIT_HOOK(vtable, device, CmdWriteTimestamp);
         INIT_HOOK(vtable, device, QueueSubmit);
         INIT_HOOK(vtable, device, CreateRenderPass2);
+        INIT_HOOK_ALIAS(vtable, device, CreateRenderPass2KHR, CreateRenderPass2);
         INIT_HOOK(vtable, device, CmdWriteBufferMarkerAMD);
         INIT_HOOK(vtable, device, GetQueueCheckpointDataNV);
     }
 }
 #undef INIT_HOOK
+#undef INIT_HOOK_ALIAS
 
 static VkLayerDeviceCreateInfo* GetChainInfo(const VkDeviceCreateInfo* pCreateInfo, VkLayerFunction func) {
     auto chain_info = reinterpret_cast<VkLayerDeviceCreateInfo*>(const_cast<void*>(pCreateInfo->pNext));
     while (chain_info && !(chain_info->sType == VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO && chain_info->function == func)) {
         chain_info = reinterpret_cast<VkLayerDeviceCreateInfo*>(const_cast<void*>(chain_info->pNext));
     }
-    assert(chain_info != NULL);
+    ASSERT(chain_info != NULL);
     return chain_info;
 }
 
-DeviceFeatures::DeviceFeatures(const VkDeviceCreateInfo* create_info)
-    : sync2(false), geometry(false), tessellation(false), meshShader(false), taskShader(false), shadingRateImage(false), advancedBlend(false) {
+DeviceFeatures::DeviceFeatures(uint32_t api_version, const VkDeviceCreateInfo* create_info)
+    : sync2(false),
+      geometry(false),
+      tessellation(false),
+      meshShader(false),
+      taskShader(false),
+      shadingRateImage(false),
+      advancedBlend(false),
+      timelineSemaphore(false),
+      deviceGroup(false) {
     if (create_info->pEnabledFeatures != nullptr) {
         //Note: explicit checks against 0 are required to avoid warnings from VS2015
         geometry = 0 != create_info->pEnabledFeatures->geometryShader;
         tessellation = 0 != create_info->pEnabledFeatures->tessellationShader;
     }
     const VkBaseInStructure* chain = reinterpret_cast<const VkBaseInStructure*>(create_info->pNext);
+
+    if (api_version >= VK_MAKE_VERSION(1, 2, 0)) {
+        timelineSemaphore = true;
+    }
+    if (create_info->pEnabledFeatures != nullptr) {
+        geometry = 0 != create_info->pEnabledFeatures->geometryShader;
+        tessellation = 0 != create_info->pEnabledFeatures->tessellationShader;
+    }
     while (chain != nullptr) {
         switch (chain->sType) {
             case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR: {
@@ -394,6 +428,14 @@ DeviceFeatures::DeviceFeatures(const VkDeviceCreateInfo* create_info)
                 auto shading_rate = reinterpret_cast<const VkPhysicalDeviceShadingRateImageFeaturesNV*>(chain);
                 shadingRateImage = 0 != shading_rate->shadingRateImage;
             } break;
+            case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES: {
+                auto timeline_sem = reinterpret_cast<const VkPhysicalDeviceTimelineSemaphoreFeatures*>(chain);
+                timelineSemaphore = 0 != timeline_sem->timelineSemaphore;
+            } break;
+            case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GROUP_PROPERTIES_KHR: {
+                deviceGroup = true;
+            } break;
+
             default:
                 break;
         }
@@ -439,14 +481,17 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateDevice(VkPhysicalDevice physicalDevice, con
 
     VkLayerDeviceCreateInfo* chain_info = GetChainInfo(pCreateInfo, VK_LAYER_LINK_INFO);
 
-    assert(chain_info->u.pLayerInfo);
+    ASSERT(chain_info->u.pLayerInfo);
     PFN_vkGetInstanceProcAddr instance_proc_addr = chain_info->u.pLayerInfo->pfnNextGetInstanceProcAddr;
     PFN_vkCreateDevice create_device = (PFN_vkCreateDevice)instance_proc_addr(instance_data->instance, "vkCreateDevice");
     PFN_vkGetDeviceProcAddr gdpa = chain_info->u.pLayerInfo->pfnNextGetDeviceProcAddr;
     if (instance_data->vtable.CreateDevice == NULL) {
         return VK_ERROR_INITIALIZATION_FAILED;
     }
-    DeviceFeatures features(pCreateInfo);
+    uint32_t effective_api_version =
+        (instance_data->api_version != 0) ? std::min(instance_data->api_version, pdd->api_version) : pdd->api_version;
+
+    DeviceFeatures features(effective_api_version, pCreateInfo);
 
     // Advance the link info for the next element on the chain
     chain_info->u.pLayerInfo = chain_info->u.pLayerInfo->pNext;
@@ -837,7 +882,7 @@ DependencyInfoV1::DependencyInfoV1(const DeviceData& device_data, uint32_t info_
             const VkImageMemoryBarrier2KHR& barrier_v2 = info->pImageMemoryBarriers[j];
 
             auto image_data = device_data.image_map.find(barrier_v2.image);
-            assert(image_data != device_data.image_map.end());
+            ASSERT(image_data != device_data.image_map.end());
             ImageAspect aspect = image_data->second.aspect;
 
             src_stage_mask |= ConvertPipelineStageMask(barrier_v2.srcStageMask, kFirst, device_data.features);
@@ -959,7 +1004,7 @@ VKAPI_ATTR void VKAPI_CALL CmdWaitEvents2KHR(VkCommandBuffer commandBuffer, uint
             VecSize(dep_info.image_barriers), reinterpret_cast<VkImageMemoryBarrier*>(dep_info.image_barriers.data()));
     } catch (const std::bad_alloc& e) {
         // We don't have a way to return an error here.
-        std::cerr << __func__ << " bad_alloc: " << e.what() << std::endl;
+        LOG("bad_alloc: %s\n", e.what());
         return;
     }
 }
@@ -993,7 +1038,7 @@ VKAPI_ATTR void VKAPI_CALL CmdPipelineBarrier2KHR(VkCommandBuffer commandBuffer,
                                                dep_info.buffer_barriers.data(), VecSize(dep_info.image_barriers),
                                                dep_info.image_barriers.data());
     } catch (const std::bad_alloc& e) {
-        std::cerr << __func__ << " bad_alloc: " << e.what() << std::endl;
+        LOG("bad_alloc: %s\n", e.what());
         return;
     }
 }
@@ -1024,13 +1069,18 @@ DeviceGroupSubmitInfo::DeviceGroupSubmitInfo(const VkAllocationCallbacks* alloc)
     info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_SUBMIT_INFO;
 }
 
-DeviceGroupSubmitInfo::DeviceGroupSubmitInfo(const VkSubmitInfo2KHR& v2, const VkAllocationCallbacks* alloc)
+DeviceGroupSubmitInfo::DeviceGroupSubmitInfo(const DeviceFeatures& features, const VkSubmitInfo2KHR& v2,
+                                             const VkAllocationCallbacks* alloc)
     : info{},
       wait_vec(decltype(wait_vec)::allocator_type(alloc)),
       cmd_vec(decltype(cmd_vec)::allocator_type(alloc)),
       signal_vec(decltype(cmd_vec)::allocator_type(alloc)) {
     info.sType = VK_STRUCTURE_TYPE_DEVICE_GROUP_SUBMIT_INFO;
-    info.pNext = v2.pNext;  // shallow copy
+    // skip translation if this feature isn't enabled
+    if (!features.deviceGroup) {
+        return;
+    }
+
     if (v2.waitSemaphoreInfoCount > 0) {
         wait_vec.reserve(v2.waitSemaphoreInfoCount);
         for (uint32_t i = 0; i < v2.waitSemaphoreInfoCount; i++) {
@@ -1063,9 +1113,16 @@ TimelineSemaphoreSubmitInfo::TimelineSemaphoreSubmitInfo(const VkAllocationCallb
     info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
 }
 
-TimelineSemaphoreSubmitInfo::TimelineSemaphoreSubmitInfo(const VkSubmitInfo2KHR& v2, const VkAllocationCallbacks* alloc)
+TimelineSemaphoreSubmitInfo::TimelineSemaphoreSubmitInfo(const DeviceFeatures& features, const VkSubmitInfo2KHR& v2,
+                                                         const VkAllocationCallbacks* alloc)
     : info{}, wait_vec(decltype(wait_vec)::allocator_type(alloc)), signal_vec(decltype(signal_vec)::allocator_type(alloc)) {
     info.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+
+    // skip translation if this feature isn't enabled
+    if (!features.timelineSemaphore) {
+        return;
+    }
+
     if (v2.waitSemaphoreInfoCount > 0) {
         wait_vec.reserve(v2.waitSemaphoreInfoCount);
         for (uint32_t i = 0; i < v2.waitSemaphoreInfoCount; i++) {
@@ -1084,15 +1141,15 @@ TimelineSemaphoreSubmitInfo::TimelineSemaphoreSubmitInfo(const VkSubmitInfo2KHR&
     }
 }
 
-SubmitData::SubmitData(const VkSubmitInfo2KHR& v2, const VkAllocationCallbacks* alloc, const DeviceFeatures &features)
+SubmitData::SubmitData(const VkSubmitInfo2KHR& v2, const VkAllocationCallbacks* alloc, const DeviceFeatures& features)
     : info{},
       wait_sem_vec(decltype(wait_sem_vec)::allocator_type(alloc)),
       wait_dst_vec(decltype(wait_dst_vec)::allocator_type(alloc)),
       cmd_vec(decltype(cmd_vec)::allocator_type(alloc)),
       signal_vec(decltype(signal_vec)::allocator_type(alloc)),
       protect(v2),
-      timeline_sem(v2, alloc),
-      device_group(v2, alloc) {
+      timeline_sem(features, v2, alloc),
+      device_group(features, v2, alloc) {
     info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     if (v2.waitSemaphoreInfoCount > 0) {
         wait_sem_vec.reserve(v2.waitSemaphoreInfoCount);
@@ -1123,10 +1180,22 @@ SubmitData::SubmitData(const VkSubmitInfo2KHR& v2, const VkAllocationCallbacks* 
         info.signalSemaphoreCount = VecSize(signal_vec);
         info.pSignalSemaphores = signal_vec.data();
     }
-    protect.pNext = v2.pNext;
-    timeline_sem.info.pNext = &protect;
-    device_group.info.pNext = &timeline_sem.info;
-    info.pNext = &device_group.info;
+    const void* tail = v2.pNext;
+    // This structure is only needed for a protected submit. Not
+    // including it is equivalent to setting protectedSubmit to false.
+    if (protect.protectedSubmit) {
+        protect.pNext = tail;
+        tail = &protect;
+    }
+    if (features.timelineSemaphore) {
+        timeline_sem.info.pNext = tail;
+        tail = &timeline_sem.info;
+    }
+    if (features.deviceGroup) {
+        device_group.info.pNext = tail;
+        tail = &device_group.info;
+    }
+    info.pNext = tail;
 }
 
 VKAPI_ATTR VkResult VKAPI_CALL QueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkSubmitInfo2KHR* pSubmits, VkFence fence) {
@@ -1248,13 +1317,18 @@ VKAPI_ATTR void VKAPI_CALL GetQueueCheckpointData2NV(VkQueue queue, uint32_t* pC
         }
     } catch (const std::bad_alloc& e) {
         // We don't have a way to return an error here.
-        std::cerr << __func__ << " bad_alloc: " << e.what() << std::endl;
+        LOG("bad_alloc: %s\n", e.what());
     }
 }
 
 VKAPI_ATTR VkResult VKAPI_CALL CreateRenderPass2(VkDevice device, const VkRenderPassCreateInfo2* pCreateInfo, const VkAllocationCallbacks* pAllocator,
                            VkRenderPass* pRenderPass) {
     auto device_data = GetDeviceData(device);
+
+    if (device_data->vtable.CreateRenderPass2 == nullptr) {
+        LOG("Device does not support CreateRenderPass2\n");
+        return VK_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
 
     // make a shallow copy of the structure so we can mess with it.
     VkRenderPassCreateInfo2 create_info = *pCreateInfo;
@@ -1339,6 +1413,9 @@ VKAPI_ATTR VkResult VKAPI_CALL CreateRenderPass2(VkDevice device, const VkRender
     return device_data->vtable.CreateRenderPass2(device, &create_info, pAllocator, pRenderPass);
 }
 
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetDeviceProcAddr(VkDevice device, const char* pName);
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetInstanceProcAddr(VkInstance instance, const char* pName);
+
 #define ADD_HOOK(fn) \
     { "vk" #fn, (PFN_vkVoidFunction)fn }
 #define ADD_HOOK_ALIAS(fn, fn_alias) \
@@ -1377,22 +1454,25 @@ static const std::unordered_map<std::string, PFN_vkVoidFunction> kDeviceFunction
 
     ADD_HOOK(CmdWriteBufferMarker2AMD),
     ADD_HOOK(GetQueueCheckpointData2NV),
+
+    // Needs to point to itself as Android loaders calls vkGet*ProcAddr to itself. Without these hooks, when the app calls
+    // vkGetDeviceProcAddr to get layer functions it will fail on Android
+    ADD_HOOK(GetInstanceProcAddr),
+    ADD_HOOK(GetDeviceProcAddr),
 };
 #undef ADD_HOOK
 #undef ADD_HOOK_ALIAS
 
-}  // namespace synchronization2
-
-extern "C" VK_LAYER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char* pName) {
-    auto instance_result = synchronization2::kInstanceFunctions.find(pName);
-    if (instance_result != synchronization2::kInstanceFunctions.end()) {
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetInstanceProcAddr(VkInstance instance, const char* pName) {
+    auto instance_result = kInstanceFunctions.find(pName);
+    if (instance_result != kInstanceFunctions.end()) {
         return instance_result->second;
     }
-    auto dev_result = synchronization2::kDeviceFunctions.find(pName);
-    if (dev_result != synchronization2::kDeviceFunctions.end()) {
+    auto dev_result = kDeviceFunctions.find(pName);
+    if (dev_result != kDeviceFunctions.end()) {
         return dev_result->second;
     }
-    auto instance_data = synchronization2::GetInstanceData(instance);
+    auto instance_data = GetInstanceData(instance);
     if (instance_data != nullptr && instance_data->vtable.GetInstanceProcAddr) {
         PFN_vkVoidFunction result = instance_data->vtable.GetInstanceProcAddr(instance, pName);
         return result;
@@ -1400,11 +1480,11 @@ extern "C" VK_LAYER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanc
     return nullptr;
 }
 
-extern "C" VK_LAYER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(VkDevice device, const char* pName) {
-    auto device_data = synchronization2::GetDeviceData(device);
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetDeviceProcAddr(VkDevice device, const char* pName) {
+    auto device_data = GetDeviceData(device);
     if (device_data && device_data->enable_layer) {
-        auto result = synchronization2::kDeviceFunctions.find(pName);
-        if (result != synchronization2::kDeviceFunctions.end()) {
+        auto result = kDeviceFunctions.find(pName);
+        if (result != kDeviceFunctions.end()) {
             return result->second;
         }
     }
@@ -1415,16 +1495,26 @@ extern "C" VK_LAYER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceP
     return nullptr;
 }
 
+}  // namespace synchronization2
+
+extern "C" VK_LAYER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char* pName) {
+    return synchronization2::GetInstanceProcAddr(instance, pName);
+}
+
+extern "C" VK_LAYER_EXPORT VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL vkGetDeviceProcAddr(VkDevice device, const char* pName) {
+    return synchronization2::GetDeviceProcAddr(device, pName);
+}
+
 extern "C" VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL
 vkNegotiateLoaderLayerInterfaceVersion(VkNegotiateLayerInterface* pVersionStruct) {
-    assert(pVersionStruct != nullptr);
-    assert(pVersionStruct->sType == LAYER_NEGOTIATE_INTERFACE_STRUCT);
+    ASSERT(pVersionStruct != nullptr);
+    ASSERT(pVersionStruct->sType == LAYER_NEGOTIATE_INTERFACE_STRUCT);
 
     // Fill in the function pointers if our version is at least capable of having the structure contain them.
     if (pVersionStruct->loaderLayerInterfaceVersion >= 2) {
         pVersionStruct->loaderLayerInterfaceVersion = 2;
-        pVersionStruct->pfnGetInstanceProcAddr = vkGetInstanceProcAddr;
-        pVersionStruct->pfnGetDeviceProcAddr = vkGetDeviceProcAddr;
+        pVersionStruct->pfnGetInstanceProcAddr = synchronization2::GetInstanceProcAddr;
+        pVersionStruct->pfnGetDeviceProcAddr = synchronization2::GetDeviceProcAddr;
         pVersionStruct->pfnGetPhysicalDeviceProcAddr = nullptr;
     }
 
@@ -1435,15 +1525,8 @@ vkNegotiateLoaderLayerInterfaceVersion(VkNegotiateLayerInterface* pVersionStruct
 extern "C" VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL
 vkEnumerateInstanceExtensionProperties(const char* pLayerName, uint32_t* pPropertyCount, VkExtensionProperties* pProperties) {
     if (pLayerName && strncmp(pLayerName, synchronization2::kGlobalLayer.layerName, VK_MAX_EXTENSION_NAME_SIZE) == 0) {
-        if (!pProperties) {
-            *pPropertyCount = 1;
-            return VK_SUCCESS;
-        }
-        if (*pPropertyCount < 1) {
-            return VK_INCOMPLETE;
-        }
-        pProperties[0] = synchronization2::kDeviceExtension;
-        *pPropertyCount = 1;
+        // VK_KHR_synchronization2 is a device extension and don't want to have it labeled as both instance and device extension
+        *pPropertyCount = 0;
         return VK_SUCCESS;
     }
     return VK_ERROR_LAYER_NOT_PRESENT;
@@ -1462,4 +1545,20 @@ extern "C" VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateInstanceLay
     *pPropertyCount = 1;
     pProperties[0] = synchronization2::kGlobalLayer;
     return VK_SUCCESS;
+}
+
+// loader-layer interface v0 - Needed for Android loader using explicit layers
+extern "C" VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice,
+                                                                                               const char* pLayerName,
+                                                                                               uint32_t* pPropertyCount,
+                                                                                               VkExtensionProperties* pProperties) {
+    // Want to have this call down chain if multiple layers are enabling extenions
+    return synchronization2::EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, pPropertyCount, pProperties);
+}
+
+// Deprecated, but needed or else Android loader will not call into the exported vkEnumerateDeviceExtensionProperties
+extern "C" VK_LAYER_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateDeviceLayerProperties(VkPhysicalDevice,
+                                                                                           uint32_t* pPropertyCount,
+                                                                                           VkLayerProperties* pProperties) {
+    return vkEnumerateInstanceLayerProperties(pPropertyCount, pProperties);
 }

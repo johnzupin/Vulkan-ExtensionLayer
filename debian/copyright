@@ -2,13 +2,59 @@ Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: vulkan-extensionlayer
 Source: https://github.com/KhronosGroup/Vulkan-ExtensionLayer/
 
-Files: debian/*
-Copyright: Copyright 2021 LunarG Inc.
-License: GPL-3 or MIT or BSD-3-clause
-
 Files: *
-Copyright: 2021 The Khronos Group Inc.
-License: Apache License Version 2.0
+Copyright: 2020-2021, Advanced Micro Devices, Inc
+           2015-2021, Google Inc
+           2015-2021, Google, Inc
+           2019-2020, Intel Corporation
+           2014-2021, LunarG, Inc
+           2015-2017, The Android Open Source Project
+           2017, The Glslang Authors
+           2013-2021, The Khronos Group Inc
+           2014-2021, Valve Corporation
+           2014-2020, Valve Software
+License: Apache-2.0
+
+Files: .clang-format
+       .travis.yml
+       BUILD.md
+       CODE_OF_CONDUCT.md
+       CONTRIBUTING.md
+       README.md
+       build-android/AndroidManifest.xml
+       build-android/jni/shaderc/*
+       build-android/known_good.json
+       cmake/*
+       docs/*
+       external/*
+       layers/json/*
+       layers/libVkLayer_khronos_synchronization2.map
+       layers/libVkLayer_khronos_timeline_semaphore.map
+       layers/vk_layer_settings.txt
+       scripts/clang-format-diff.py
+       scripts/known_good.json
+       tests/synchronization2_tests.h
+       tests/vk_extension_layer_tests.vcxproj.user
+Copyright: 2015-2021, LunarG, Inc
+           2021, The Khronos Group Inc
+           2015, Valve Corporation
+License: Apache-2.0	   
+
+Files: debian/*
+Copyright: 2021, LunarG Inc
+License: Apache-2.0
+
+Files: cmake/Copyright_cmake.txt
+       cmake/FindWayland.cmake
+       cmake/FindX11_XCB.cmake
+Copyright: 2011, Fredrik Höglund <fredrik@kde.org>
+           2008, Helio Chissini de Castro <helio@kde.org>
+           2000-2018, Kitware, Inc
+           2013, Martin Gräßlin <mgraesslin@kde.org>
+           2007, Matthias Kretz <kretz@kde.org>
+License: BSD-3-clause
+
+License: Apache-2.0
  Apache License
  Version 2.0, January 2004
  http://www.apache.org/licenses/
@@ -211,19 +257,15 @@ License: Apache License Version 2.0
  See the License for the specific language governing permissions and
  limitations under the License.
 
-License: BSD-3-Clause
-  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-  
-  1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-  2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-  3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-License: MIT
-  Copyright <YEAR> <COPYRIGHT HOLDER>
-  
-  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-  
-  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-  
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+License: BSD-3-clause
+ Copyright <YEAR> <COPYRIGHT HOLDER>
+ .
+ Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+ .
+ 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+ .
+ 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+ .
+ 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+ .
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

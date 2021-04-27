@@ -1,3 +1,25 @@
+vulkan-extensionlayer (1.2.176.0~rc1-1lunarg18.04-1) bionic; urgency=medium
+
+  [ Biswapriyo Nath ]
+  * CMake: Check MSVC instead of WIN32 for MSVC compiler options.
+
+  [ Jeremy Gebben ]
+  * build: update known_good for 1.2.172 headers
+
+  [ John Zupin ]
+  * packaging: update debian/copyright file
+
+  [ Christophe ]
+  * synchronization2: add layers settings to manifest
+  * synchronization2: add layer status and url
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.2.176
+  * build: Update gslang, SPIRV-Headers and Vulkan-Tools known goods
+  * build: update glslang known-good to fix cmake compatibility
+
+ -- John Zupin <john@odin>  Tue, 27 Apr 2021 15:47:50 -0600
+
 vulkan-extensionlayer (1.2.170.0~rc4-1lunarg18.04-1) bionic; urgency=medium
 
   * packaging: add newline in copyright

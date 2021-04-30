@@ -1,3 +1,10 @@
+vulkan-extensionlayer (1.2.176.0~rc2-1lunarg18.04-1) bionic; urgency=medium
+
+  [ Christophe ]
+  * synchronization2: fix layer settings to match layer schema
+
+ -- John Zupin <john@odin>  Fri, 30 Apr 2021 12:52:01 -0600
+
 vulkan-extensionlayer (1.2.176.0~rc1-1lunarg18.04-1) bionic; urgency=medium
 
   [ Biswapriyo Nath ]

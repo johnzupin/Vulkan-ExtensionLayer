@@ -1,3 +1,24 @@
+vulkan-extensionlayer (1.2.182.0~rc1-1lunarg20.04-1) focal; urgency=medium
+
+  [ Christophe ]
+  * synchronization2: fix layer settings to match layer schema
+  * manifest: fix url, add introduction
+
+  [ Jeremy Gebben ]
+  * build: Update 'common' layer components
+  * build: Fix the VulkanEL_generated_source target
+  * BUILD.md: Document generated source
+  * build: Update Vulkan-Headers known good to v1.2.180
+  * build: Update Vulkan-Headers known good to 1.2.181
+  * build: Update Vulkan-Headers to 1.2.182
+  * scripts: Disable codegen for  'VK_HUAWEI_subpass_shading'
+  * build: Update glslang and SPIRV-Headers known goods
+
+  [ John Zupin ]
+  * packaging: update control file for 1.2.182.0 SDK
+
+ -- John Zupin <john@odin>  Fri, 25 Jun 2021 15:39:29 -0600
+
 vulkan-extensionlayer (1.2.176.0~rc2-1lunarg20.04-1) focal; urgency=medium
 
   [ Christophe ]

@@ -1,3 +1,22 @@
+vulkan-extensionlayer (1.2.189.0~rc1-1lunarg20.04-1) focal; urgency=medium
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.2.185
+  * build: Update Vulkan-Headers to 1.2.186
+  * build: Update Vulkan-Headers to 1.2.187
+  * build: Add github build actions for Linux and Android
+  * build: Remove travis CI workflows
+  * scripts: Fix BuildVEL()
+  * scripts: Use correct repo in check_code_format.py
+  * scripts: Add cmake_test_min.py
+  * build: Make codegen checking a separate job
+  * build: Add Windows build github actions
+  * build: Update Vulkan-Headers to 1.2.188
+  * build: Update Vulkan-Headers to v1.2.189
+  * build: Update glslang and SPIRV-Headers known goods
+
+ -- John Zupin <john@odin>  Fri, 27 Aug 2021 17:24:36 -0600
+
 vulkan-extensionlayer (1.2.182.0~rc1-1lunarg20.04-1) focal; urgency=medium
 
   [ Christophe ]

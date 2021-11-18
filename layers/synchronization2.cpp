@@ -31,6 +31,7 @@
 #include "vk_format_utils.h"
 #include "vk_layer_config.h"
 #include "vk_safe_struct.h"
+#include "vk_util.h"
 
 // required by vk_safe_struct
 std::vector<std::pair<uint32_t, uint32_t>> custom_stype_info{};
@@ -177,25 +178,34 @@ static std::shared_ptr<DeviceData> GetDeviceData(const void* object) {
     return result != device_data_map.end() ? result->second : nullptr;
 }
 
-VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char* pLayerName, uint32_t* pPropertyCount,
-                                            VkExtensionProperties* pProperties) {
-    if (pLayerName && strncmp(pLayerName, kGlobalLayer.layerName, VK_MAX_EXTENSION_NAME_SIZE) == 0) {
-        if (!pProperties) {
-            *pPropertyCount = 1;
-            return VK_SUCCESS;
-        }
-        if (*pPropertyCount < 1) {
-            return VK_INCOMPLETE;
-        }
-        pProperties[0] = kDeviceExtension;
-        *pPropertyCount = 1;
-        return VK_SUCCESS;
-    } else {
-        // Only call down if not the layer
-        // Android will pass a null physicalDevice with the layer name so can't get instance data from it
+VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice, const char* pLayerName,
+                                                                  uint32_t* pPropertyCount, VkExtensionProperties* pProperties) {
+    if (pLayerName && strncmp(pLayerName, kGlobalLayer.layerName, VK_MAX_EXTENSION_NAME_SIZE)) {
         auto instance_data = GetInstanceData(physicalDevice);
         return instance_data->vtable.EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, pPropertyCount, pProperties);
     }
+
+    if (!pLayerName) {
+        uint32_t count = 0;
+        auto instance_data = GetInstanceData(physicalDevice);
+        instance_data->vtable.EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, &count, nullptr);
+        if (!pProperties) {
+            *pPropertyCount = count + 1;
+            return VK_SUCCESS;
+        }
+        if (*pPropertyCount <= count) {
+            instance_data->vtable.EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, pPropertyCount, pProperties);
+            return VK_INCOMPLETE;
+        }
+        instance_data->vtable.EnumerateDeviceExtensionProperties(physicalDevice, pLayerName, &count, pProperties);
+        pProperties[count] = kDeviceExtension;
+        *pPropertyCount = count + 1;
+        return VK_SUCCESS;
+    }
+
+    VK_OUTARRAY_MAKE(out, pProperties, pPropertyCount);
+    vk_outarray_append(&out, prop) { *prop = kDeviceExtension; }
+    return vk_outarray_status(&out);
 }
 
 static void CheckDeviceFeatures(PhysicalDeviceData &pdd, VkPhysicalDeviceFeatures2* pFeatures) {
@@ -356,6 +366,9 @@ DeviceData::DeviceData(VkDevice device, PFN_vkGetDeviceProcAddr gpa, const Devic
         INIT_HOOK(vtable, device, DestroyDevice);
         INIT_HOOK(vtable, device, CreateImage);
         INIT_HOOK(vtable, device, DestroyImage);
+        INIT_HOOK(vtable, device, CreateSwapchainKHR);
+        INIT_HOOK(vtable, device, GetSwapchainImagesKHR);
+        INIT_HOOK(vtable, device, DestroySwapchainKHR);
         INIT_HOOK(vtable, device, CmdSetEvent);
         INIT_HOOK(vtable, device, CmdResetEvent);
         INIT_HOOK(vtable, device, CmdWaitEvents);
@@ -930,6 +943,44 @@ VKAPI_ATTR void VKAPI_CALL DestroyImage(VkDevice device, VkImage image, const Vk
     device_data->image_map.erase(image);
 }
 
+VKAPI_ATTR VkResult VKAPI_CALL CreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSwapchainKHR* pSwapchain) {
+    auto device_data = GetDeviceData(device);
+    VkResult result = device_data->vtable.CreateSwapchainKHR(device, pCreateInfo, pAllocator, pSwapchain);
+    if (result == VK_SUCCESS) {
+        SwapchainData swapchain_data{pCreateInfo->imageFormat};
+        device_data->swapchain_map.insert(*pSwapchain, swapchain_data);
+    }
+    return result;
+}
+
+VKAPI_ATTR VkResult VKAPI_CALL GetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchain, uint32_t* pSwapchainImageCount, VkImage* pSwapchainImages) {
+    auto device_data = GetDeviceData(device);
+    VkResult result = device_data->vtable.GetSwapchainImagesKHR(device, swapchain, pSwapchainImageCount, pSwapchainImages);
+    if (result == VK_SUCCESS && pSwapchainImages) {
+        auto iter = device_data->swapchain_map.find(swapchain);
+        if (iter != device_data->swapchain_map.end()) {
+            ImageData image_data{ImageAspectFromFormat(iter->second.format)};
+            for (uint32_t i = 0; i < *pSwapchainImageCount; i++) {
+                device_data->image_map.insert(pSwapchainImages[i], image_data);
+            }
+        }
+    }
+    return result;
+}
+
+VKAPI_ATTR void VKAPI_CALL DestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain, const VkAllocationCallbacks* pAllocator) {
+    auto device_data = GetDeviceData(device);
+    device_data->vtable.DestroySwapchainKHR(device, swapchain, pAllocator);
+    auto iter = device_data->swapchain_map.find(swapchain);
+    if (iter != device_data->swapchain_map.end()) {
+        for (auto image: iter->second.images) {
+            device_data->image_map.erase(image);
+        }
+        device_data->swapchain_map.erase(swapchain);
+    }
+}
+
+
 VKAPI_ATTR void VKAPI_CALL CmdSetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipelineStageFlags stage_mask) {
     auto device_data = GetDeviceData(commandBuffer);
 
@@ -1435,6 +1486,9 @@ static const std::unordered_map<std::string, PFN_vkVoidFunction> kDeviceFunction
     ADD_HOOK(DestroyDevice),
     ADD_HOOK(CreateImage),
     ADD_HOOK(DestroyImage),
+    ADD_HOOK(CreateSwapchainKHR),
+    ADD_HOOK(GetSwapchainImagesKHR),
+    ADD_HOOK(DestroySwapchainKHR),
 
     // NOTE: we need to hook the original synchronization functions
     // to translate VK_PIPELINE_STAGE_NONE_KHR.

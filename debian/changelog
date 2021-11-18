@@ -1,3 +1,36 @@
+vulkan-extensionlayer (1.2.198.0~rc2-1lunarg18.04-1) bionic; urgency=medium
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers known good to 1.2.190
+  * build: Update Vulkan-Headers to v1.2.191
+  * build: Update Vulkan-Headers to 1.2.192
+  * build: Update Vulkan-Headers to 1.2.193
+  * build: Update Vulkan-Headers to 1.2.194
+  * build: Update Vulkan-Headers to 1.2.195
+  * build: Update Vulkan-Headers to 1.2.196
+
+  [ Trevin Forkert ]
+  * build: Link to the logging library on Android
+  * timeline_sem: Added wiring needed by the older loader on Android
+  * timeline_sem: Made layer name consistent with the JSON manifest
+  * build: Made the functions needed by the Android loader visible
+
+  [ Jeremy Gebben ]
+  * layers: Fix MSVC build problems in vk_util.h
+
+  [ Trevin Forkert ]
+  * sync2: Fixed the enumeration of the device extension properties
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.2.197
+  * build: Update Vulkan-Headers to 1.2.198
+  * build: Update glslang and SPIRV-Headers known goods
+  * build: Update gslang known-good again to fix a regression
+  * sync2: Add handling for swapchain images
+  * tests: Add Sync2Test.SwapchainImage
+
+ -- John Zupin <john@odin>  Thu, 18 Nov 2021 12:01:25 -0700
+
 vulkan-extensionlayer (1.2.198.0~rc1-1lunarg18.04-1) bionic; urgency=medium
 
   * UNRELEASED

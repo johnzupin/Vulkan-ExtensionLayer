@@ -7,7 +7,7 @@ Copyright: 2020-2021, Advanced Micro Devices, Inc
            2015-2021, Google Inc
            2015-2021, Google, Inc
            2019-2020, Intel Corporation
-           2014-2021, LunarG, Inc
+           2014-2022, LunarG, Inc
            2015-2017, The Android Open Source Project
            2017, The Glslang Authors
            2013-2021, The Khronos Group Inc
@@ -41,7 +41,7 @@ Copyright: 2015-2021, LunarG, Inc
 License: Apache-2.0	   
 
 Files: debian/*
-Copyright: 2021, LunarG Inc
+Copyright: 2022, LunarG Inc
 License: Apache-2.0
 
 Files: cmake/Copyright_cmake.txt

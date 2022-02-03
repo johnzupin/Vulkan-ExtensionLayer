@@ -1,3 +1,19 @@
+vulkan-extensionlayer (1.3.204.0~rc1-1lunarg20.04-1) focal; urgency=medium
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.2.199
+  * build: Update Vulkan-Headers to 1.2.201
+  * build: Update Vulkan-Headers to 1.2.203
+  * build: Update Vulkan-Headers to 1.3.204
+
+  [ John Zupin ]
+  * packaging: update copyright
+
+  [ Jeremy Gebben ]
+  * build: Bump known goods for glslang, SPIRV-Headers, Vulkan-Tools
+
+ -- John Zupin <john@odin>  Thu, 03 Feb 2022 16:21:18 -0700
+
 vulkan-extensionlayer (1.2.198.0~rc2-1lunarg20.04-1) focal; urgency=medium
 
   [ Jeremy Gebben ]

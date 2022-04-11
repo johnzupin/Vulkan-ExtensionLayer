@@ -1,3 +1,16 @@
+vulkan-extensionlayer (1.3.211.0~rc1-1lunarg20.04-1) focal; urgency=medium
+
+  [ Jeremy Gebben ]
+  * ci: Remove windows-2016 github actions runner
+  * build: Update Vulkan-Headers and Tools to 1.3.210
+  * build: Update Vulkan-Headers and -Tools to 1.3.211
+  * build: Update glslang and SPIRV-Headers for next SDK
+
+  [ John Zupin ]
+  * packaging: update deps versions for vulkan
+
+ -- john <john@odin>  Mon, 11 Apr 2022 14:23:18 -0600
+
 vulkan-extensionlayer (1.3.209.0~rc1-1lunarg20.04-1) focal; urgency=medium
 
   [ David Pinedo ]

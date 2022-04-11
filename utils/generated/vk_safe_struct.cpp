@@ -21561,8 +21561,6 @@ void safe_VkVideoDecodeCapabilitiesKHR::initialize(const safe_VkVideoDecodeCapab
 safe_VkVideoDecodeInfoKHR::safe_VkVideoDecodeInfoKHR(const VkVideoDecodeInfoKHR* in_struct) :
     sType(in_struct->sType),
     flags(in_struct->flags),
-    codedOffset(in_struct->codedOffset),
-    codedExtent(in_struct->codedExtent),
     srcBuffer(in_struct->srcBuffer),
     srcBufferOffset(in_struct->srcBufferOffset),
     srcBufferRange(in_struct->srcBufferRange),
@@ -21593,8 +21591,6 @@ safe_VkVideoDecodeInfoKHR::safe_VkVideoDecodeInfoKHR(const safe_VkVideoDecodeInf
 {
     sType = copy_src.sType;
     flags = copy_src.flags;
-    codedOffset = copy_src.codedOffset;
-    codedExtent = copy_src.codedExtent;
     srcBuffer = copy_src.srcBuffer;
     srcBufferOffset = copy_src.srcBufferOffset;
     srcBufferRange = copy_src.srcBufferRange;
@@ -21626,8 +21622,6 @@ safe_VkVideoDecodeInfoKHR& safe_VkVideoDecodeInfoKHR::operator=(const safe_VkVid
 
     sType = copy_src.sType;
     flags = copy_src.flags;
-    codedOffset = copy_src.codedOffset;
-    codedExtent = copy_src.codedExtent;
     srcBuffer = copy_src.srcBuffer;
     srcBufferOffset = copy_src.srcBufferOffset;
     srcBufferRange = copy_src.srcBufferRange;
@@ -21662,8 +21656,6 @@ void safe_VkVideoDecodeInfoKHR::initialize(const VkVideoDecodeInfoKHR* in_struct
 {
     sType = in_struct->sType;
     flags = in_struct->flags;
-    codedOffset = in_struct->codedOffset;
-    codedExtent = in_struct->codedExtent;
     srcBuffer = in_struct->srcBuffer;
     srcBufferOffset = in_struct->srcBufferOffset;
     srcBufferRange = in_struct->srcBufferRange;
@@ -21686,8 +21678,6 @@ void safe_VkVideoDecodeInfoKHR::initialize(const safe_VkVideoDecodeInfoKHR* copy
 {
     sType = copy_src->sType;
     flags = copy_src->flags;
-    codedOffset = copy_src->codedOffset;
-    codedExtent = copy_src->codedExtent;
     srcBuffer = copy_src->srcBuffer;
     srcBufferOffset = copy_src->srcBufferOffset;
     srcBufferRange = copy_src->srcBufferRange;
@@ -26242,7 +26232,6 @@ safe_VkVideoEncodeInfoKHR::safe_VkVideoEncodeInfoKHR(const VkVideoEncodeInfoKHR*
     sType(in_struct->sType),
     flags(in_struct->flags),
     qualityLevel(in_struct->qualityLevel),
-    codedExtent(in_struct->codedExtent),
     dstBitstreamBuffer(in_struct->dstBitstreamBuffer),
     dstBitstreamBufferOffset(in_struct->dstBitstreamBufferOffset),
     dstBitstreamBufferMaxRange(in_struct->dstBitstreamBufferMaxRange),
@@ -26275,7 +26264,6 @@ safe_VkVideoEncodeInfoKHR::safe_VkVideoEncodeInfoKHR(const safe_VkVideoEncodeInf
     sType = copy_src.sType;
     flags = copy_src.flags;
     qualityLevel = copy_src.qualityLevel;
-    codedExtent = copy_src.codedExtent;
     dstBitstreamBuffer = copy_src.dstBitstreamBuffer;
     dstBitstreamBufferOffset = copy_src.dstBitstreamBufferOffset;
     dstBitstreamBufferMaxRange = copy_src.dstBitstreamBufferMaxRange;
@@ -26309,7 +26297,6 @@ safe_VkVideoEncodeInfoKHR& safe_VkVideoEncodeInfoKHR::operator=(const safe_VkVid
     sType = copy_src.sType;
     flags = copy_src.flags;
     qualityLevel = copy_src.qualityLevel;
-    codedExtent = copy_src.codedExtent;
     dstBitstreamBuffer = copy_src.dstBitstreamBuffer;
     dstBitstreamBufferOffset = copy_src.dstBitstreamBufferOffset;
     dstBitstreamBufferMaxRange = copy_src.dstBitstreamBufferMaxRange;
@@ -26346,7 +26333,6 @@ void safe_VkVideoEncodeInfoKHR::initialize(const VkVideoEncodeInfoKHR* in_struct
     sType = in_struct->sType;
     flags = in_struct->flags;
     qualityLevel = in_struct->qualityLevel;
-    codedExtent = in_struct->codedExtent;
     dstBitstreamBuffer = in_struct->dstBitstreamBuffer;
     dstBitstreamBufferOffset = in_struct->dstBitstreamBufferOffset;
     dstBitstreamBufferMaxRange = in_struct->dstBitstreamBufferMaxRange;
@@ -26371,7 +26357,6 @@ void safe_VkVideoEncodeInfoKHR::initialize(const safe_VkVideoEncodeInfoKHR* copy
     sType = copy_src->sType;
     flags = copy_src->flags;
     qualityLevel = copy_src->qualityLevel;
-    codedExtent = copy_src->codedExtent;
     dstBitstreamBuffer = copy_src->dstBitstreamBuffer;
     dstBitstreamBufferOffset = copy_src->dstBitstreamBufferOffset;
     dstBitstreamBufferMaxRange = copy_src->dstBitstreamBufferMaxRange;
@@ -43772,6 +43757,170 @@ void safe_VkDeviceDiagnosticsConfigCreateInfoNV::initialize(const safe_VkDeviceD
     pNext = SafePnextCopy(copy_src->pNext);
 }
 
+safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT::safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT(const VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT* in_struct) :
+    sType(in_struct->sType),
+    graphicsPipelineLibrary(in_struct->graphicsPipelineLibrary)
+{
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT::safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT() :
+    sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT),
+    pNext(nullptr)
+{}
+
+safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT::safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT(const safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT& copy_src)
+{
+    sType = copy_src.sType;
+    graphicsPipelineLibrary = copy_src.graphicsPipelineLibrary;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT& safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT::operator=(const safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT& copy_src)
+{
+    if (&copy_src == this) return *this;
+
+    if (pNext)
+        FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    graphicsPipelineLibrary = copy_src.graphicsPipelineLibrary;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT::~safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT()
+{
+    if (pNext)
+        FreePnextChain(pNext);
+}
+
+void safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT::initialize(const VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT* in_struct)
+{
+    sType = in_struct->sType;
+    graphicsPipelineLibrary = in_struct->graphicsPipelineLibrary;
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+void safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT::initialize(const safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT* copy_src)
+{
+    sType = copy_src->sType;
+    graphicsPipelineLibrary = copy_src->graphicsPipelineLibrary;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
+safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT::safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT(const VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT* in_struct) :
+    sType(in_struct->sType),
+    graphicsPipelineLibraryFastLinking(in_struct->graphicsPipelineLibraryFastLinking),
+    graphicsPipelineLibraryIndependentInterpolationDecoration(in_struct->graphicsPipelineLibraryIndependentInterpolationDecoration)
+{
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT::safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT() :
+    sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT),
+    pNext(nullptr)
+{}
+
+safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT::safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT(const safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT& copy_src)
+{
+    sType = copy_src.sType;
+    graphicsPipelineLibraryFastLinking = copy_src.graphicsPipelineLibraryFastLinking;
+    graphicsPipelineLibraryIndependentInterpolationDecoration = copy_src.graphicsPipelineLibraryIndependentInterpolationDecoration;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT& safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT::operator=(const safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT& copy_src)
+{
+    if (&copy_src == this) return *this;
+
+    if (pNext)
+        FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    graphicsPipelineLibraryFastLinking = copy_src.graphicsPipelineLibraryFastLinking;
+    graphicsPipelineLibraryIndependentInterpolationDecoration = copy_src.graphicsPipelineLibraryIndependentInterpolationDecoration;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT::~safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT()
+{
+    if (pNext)
+        FreePnextChain(pNext);
+}
+
+void safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT::initialize(const VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT* in_struct)
+{
+    sType = in_struct->sType;
+    graphicsPipelineLibraryFastLinking = in_struct->graphicsPipelineLibraryFastLinking;
+    graphicsPipelineLibraryIndependentInterpolationDecoration = in_struct->graphicsPipelineLibraryIndependentInterpolationDecoration;
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+void safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT::initialize(const safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT* copy_src)
+{
+    sType = copy_src->sType;
+    graphicsPipelineLibraryFastLinking = copy_src->graphicsPipelineLibraryFastLinking;
+    graphicsPipelineLibraryIndependentInterpolationDecoration = copy_src->graphicsPipelineLibraryIndependentInterpolationDecoration;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
+safe_VkGraphicsPipelineLibraryCreateInfoEXT::safe_VkGraphicsPipelineLibraryCreateInfoEXT(const VkGraphicsPipelineLibraryCreateInfoEXT* in_struct) :
+    sType(in_struct->sType),
+    flags(in_struct->flags)
+{
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+safe_VkGraphicsPipelineLibraryCreateInfoEXT::safe_VkGraphicsPipelineLibraryCreateInfoEXT() :
+    sType(VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT),
+    pNext(nullptr)
+{}
+
+safe_VkGraphicsPipelineLibraryCreateInfoEXT::safe_VkGraphicsPipelineLibraryCreateInfoEXT(const safe_VkGraphicsPipelineLibraryCreateInfoEXT& copy_src)
+{
+    sType = copy_src.sType;
+    flags = copy_src.flags;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkGraphicsPipelineLibraryCreateInfoEXT& safe_VkGraphicsPipelineLibraryCreateInfoEXT::operator=(const safe_VkGraphicsPipelineLibraryCreateInfoEXT& copy_src)
+{
+    if (&copy_src == this) return *this;
+
+    if (pNext)
+        FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    flags = copy_src.flags;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkGraphicsPipelineLibraryCreateInfoEXT::~safe_VkGraphicsPipelineLibraryCreateInfoEXT()
+{
+    if (pNext)
+        FreePnextChain(pNext);
+}
+
+void safe_VkGraphicsPipelineLibraryCreateInfoEXT::initialize(const VkGraphicsPipelineLibraryCreateInfoEXT* in_struct)
+{
+    sType = in_struct->sType;
+    flags = in_struct->flags;
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+void safe_VkGraphicsPipelineLibraryCreateInfoEXT::initialize(const safe_VkGraphicsPipelineLibraryCreateInfoEXT* copy_src)
+{
+    sType = copy_src->sType;
+    flags = copy_src->flags;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
 safe_VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV::safe_VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV(const VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV* in_struct) :
     sType(in_struct->sType),
     fragmentShadingRateEnums(in_struct->fragmentShadingRateEnums),
@@ -47048,6 +47197,69 @@ void safe_VkPipelineColorWriteCreateInfoEXT::initialize(const safe_VkPipelineCol
     }
 }
 
+safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT::safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT(const VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT* in_struct) :
+    sType(in_struct->sType),
+    primitivesGeneratedQuery(in_struct->primitivesGeneratedQuery),
+    primitivesGeneratedQueryWithRasterizerDiscard(in_struct->primitivesGeneratedQueryWithRasterizerDiscard),
+    primitivesGeneratedQueryWithNonZeroStreams(in_struct->primitivesGeneratedQueryWithNonZeroStreams)
+{
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT::safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT() :
+    sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVES_GENERATED_QUERY_FEATURES_EXT),
+    pNext(nullptr)
+{}
+
+safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT::safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT(const safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT& copy_src)
+{
+    sType = copy_src.sType;
+    primitivesGeneratedQuery = copy_src.primitivesGeneratedQuery;
+    primitivesGeneratedQueryWithRasterizerDiscard = copy_src.primitivesGeneratedQueryWithRasterizerDiscard;
+    primitivesGeneratedQueryWithNonZeroStreams = copy_src.primitivesGeneratedQueryWithNonZeroStreams;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT& safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT::operator=(const safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT& copy_src)
+{
+    if (&copy_src == this) return *this;
+
+    if (pNext)
+        FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    primitivesGeneratedQuery = copy_src.primitivesGeneratedQuery;
+    primitivesGeneratedQueryWithRasterizerDiscard = copy_src.primitivesGeneratedQueryWithRasterizerDiscard;
+    primitivesGeneratedQueryWithNonZeroStreams = copy_src.primitivesGeneratedQueryWithNonZeroStreams;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT::~safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT()
+{
+    if (pNext)
+        FreePnextChain(pNext);
+}
+
+void safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT::initialize(const VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT* in_struct)
+{
+    sType = in_struct->sType;
+    primitivesGeneratedQuery = in_struct->primitivesGeneratedQuery;
+    primitivesGeneratedQueryWithRasterizerDiscard = in_struct->primitivesGeneratedQueryWithRasterizerDiscard;
+    primitivesGeneratedQueryWithNonZeroStreams = in_struct->primitivesGeneratedQueryWithNonZeroStreams;
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+void safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT::initialize(const safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT* copy_src)
+{
+    sType = copy_src->sType;
+    primitivesGeneratedQuery = copy_src->primitivesGeneratedQuery;
+    primitivesGeneratedQueryWithRasterizerDiscard = copy_src->primitivesGeneratedQueryWithRasterizerDiscard;
+    primitivesGeneratedQueryWithNonZeroStreams = copy_src->primitivesGeneratedQueryWithNonZeroStreams;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
 safe_VkPhysicalDeviceImageViewMinLodFeaturesEXT::safe_VkPhysicalDeviceImageViewMinLodFeaturesEXT(const VkPhysicalDeviceImageViewMinLodFeaturesEXT* in_struct) :
     sType(in_struct->sType),
     minLod(in_struct->minLod)
@@ -47257,6 +47469,64 @@ void safe_VkPhysicalDeviceMultiDrawPropertiesEXT::initialize(const safe_VkPhysic
 {
     sType = copy_src->sType;
     maxMultiDrawCount = copy_src->maxMultiDrawCount;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
+safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT::safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT(const VkPhysicalDeviceImage2DViewOf3DFeaturesEXT* in_struct) :
+    sType(in_struct->sType),
+    image2DViewOf3D(in_struct->image2DViewOf3D),
+    sampler2DViewOf3D(in_struct->sampler2DViewOf3D)
+{
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT::safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT() :
+    sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_2D_VIEW_OF_3D_FEATURES_EXT),
+    pNext(nullptr)
+{}
+
+safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT::safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT(const safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT& copy_src)
+{
+    sType = copy_src.sType;
+    image2DViewOf3D = copy_src.image2DViewOf3D;
+    sampler2DViewOf3D = copy_src.sampler2DViewOf3D;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT& safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT::operator=(const safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT& copy_src)
+{
+    if (&copy_src == this) return *this;
+
+    if (pNext)
+        FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    image2DViewOf3D = copy_src.image2DViewOf3D;
+    sampler2DViewOf3D = copy_src.sampler2DViewOf3D;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT::~safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT()
+{
+    if (pNext)
+        FreePnextChain(pNext);
+}
+
+void safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT::initialize(const VkPhysicalDeviceImage2DViewOf3DFeaturesEXT* in_struct)
+{
+    sType = in_struct->sType;
+    image2DViewOf3D = in_struct->image2DViewOf3D;
+    sampler2DViewOf3D = in_struct->sampler2DViewOf3D;
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+void safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT::initialize(const safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT* copy_src)
+{
+    sType = copy_src->sType;
+    image2DViewOf3D = copy_src->image2DViewOf3D;
+    sampler2DViewOf3D = copy_src->sampler2DViewOf3D;
     pNext = SafePnextCopy(copy_src->pNext);
 }
 
@@ -49637,6 +49907,9 @@ void *SafePnextCopy(const void *pNext) {
             safe_pNext = struct_copy;
             break;
         }
+        case VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO:
+            safe_pNext = new safe_VkShaderModuleCreateInfo(reinterpret_cast<const VkShaderModuleCreateInfo *>(pNext));
+            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES:
             safe_pNext = new safe_VkPhysicalDeviceSubgroupProperties(reinterpret_cast<const VkPhysicalDeviceSubgroupProperties *>(pNext));
             break;
@@ -50039,6 +50312,9 @@ void *SafePnextCopy(const void *pNext) {
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR:
             safe_pNext = new safe_VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR(reinterpret_cast<const VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR *>(pNext));
             break;
+        case VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR:
+            safe_pNext = new safe_VkPipelineLibraryCreateInfoKHR(reinterpret_cast<const VkPipelineLibraryCreateInfoKHR *>(pNext));
+            break;
         case VK_STRUCTURE_TYPE_PRESENT_ID_KHR:
             safe_pNext = new safe_VkPresentIdKHR(reinterpret_cast<const VkPresentIdKHR *>(pNext));
             break;
@@ -50137,6 +50413,9 @@ void *SafePnextCopy(const void *pNext) {
             break;
         case VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT:
             safe_pNext = new safe_VkPipelineRasterizationDepthClipStateCreateInfoEXT(reinterpret_cast<const VkPipelineRasterizationDepthClipStateCreateInfoEXT *>(pNext));
+            break;
+        case VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT:
+            safe_pNext = new safe_VkDebugUtilsObjectNameInfoEXT(reinterpret_cast<const VkDebugUtilsObjectNameInfoEXT *>(pNext));
             break;
         case VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT:
             safe_pNext = new safe_VkDebugUtilsMessengerCreateInfoEXT(reinterpret_cast<const VkDebugUtilsMessengerCreateInfoEXT *>(pNext));
@@ -50423,6 +50702,15 @@ void *SafePnextCopy(const void *pNext) {
         case VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV:
             safe_pNext = new safe_VkDeviceDiagnosticsConfigCreateInfoNV(reinterpret_cast<const VkDeviceDiagnosticsConfigCreateInfoNV *>(pNext));
             break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT:
+            safe_pNext = new safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT(reinterpret_cast<const VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT *>(pNext));
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT:
+            safe_pNext = new safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT(reinterpret_cast<const VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT *>(pNext));
+            break;
+        case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT:
+            safe_pNext = new safe_VkGraphicsPipelineLibraryCreateInfoEXT(reinterpret_cast<const VkGraphicsPipelineLibraryCreateInfoEXT *>(pNext));
+            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_FEATURES_NV:
             safe_pNext = new safe_VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV(reinterpret_cast<const VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV *>(pNext));
             break;
@@ -50507,6 +50795,9 @@ void *SafePnextCopy(const void *pNext) {
         case VK_STRUCTURE_TYPE_PIPELINE_COLOR_WRITE_CREATE_INFO_EXT:
             safe_pNext = new safe_VkPipelineColorWriteCreateInfoEXT(reinterpret_cast<const VkPipelineColorWriteCreateInfoEXT *>(pNext));
             break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVES_GENERATED_QUERY_FEATURES_EXT:
+            safe_pNext = new safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT(reinterpret_cast<const VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT *>(pNext));
+            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT:
             safe_pNext = new safe_VkPhysicalDeviceImageViewMinLodFeaturesEXT(reinterpret_cast<const VkPhysicalDeviceImageViewMinLodFeaturesEXT *>(pNext));
             break;
@@ -50518,6 +50809,9 @@ void *SafePnextCopy(const void *pNext) {
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT:
             safe_pNext = new safe_VkPhysicalDeviceMultiDrawPropertiesEXT(reinterpret_cast<const VkPhysicalDeviceMultiDrawPropertiesEXT *>(pNext));
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_2D_VIEW_OF_3D_FEATURES_EXT:
+            safe_pNext = new safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT(reinterpret_cast<const VkPhysicalDeviceImage2DViewOf3DFeaturesEXT *>(pNext));
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BORDER_COLOR_SWIZZLE_FEATURES_EXT:
             safe_pNext = new safe_VkPhysicalDeviceBorderColorSwizzleFeaturesEXT(reinterpret_cast<const VkPhysicalDeviceBorderColorSwizzleFeaturesEXT *>(pNext));
@@ -50791,6 +51085,9 @@ void FreePnextChain(const void *pNext) {
         case VK_STRUCTURE_TYPE_LOADER_DEVICE_CREATE_INFO:
             FreePnextChain(header->pNext);
             delete reinterpret_cast<const VkLayerDeviceCreateInfo *>(pNext);
+            break;
+        case VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO:
+            delete reinterpret_cast<const safe_VkShaderModuleCreateInfo *>(header);
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES:
             delete reinterpret_cast<const safe_VkPhysicalDeviceSubgroupProperties *>(header);
@@ -51194,6 +51491,9 @@ void FreePnextChain(const void *pNext) {
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR:
             delete reinterpret_cast<const safe_VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR *>(header);
             break;
+        case VK_STRUCTURE_TYPE_PIPELINE_LIBRARY_CREATE_INFO_KHR:
+            delete reinterpret_cast<const safe_VkPipelineLibraryCreateInfoKHR *>(header);
+            break;
         case VK_STRUCTURE_TYPE_PRESENT_ID_KHR:
             delete reinterpret_cast<const safe_VkPresentIdKHR *>(header);
             break;
@@ -51292,6 +51592,9 @@ void FreePnextChain(const void *pNext) {
             break;
         case VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT:
             delete reinterpret_cast<const safe_VkPipelineRasterizationDepthClipStateCreateInfoEXT *>(header);
+            break;
+        case VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT:
+            delete reinterpret_cast<const safe_VkDebugUtilsObjectNameInfoEXT *>(header);
             break;
         case VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT:
             delete reinterpret_cast<const safe_VkDebugUtilsMessengerCreateInfoEXT *>(header);
@@ -51578,6 +51881,15 @@ void FreePnextChain(const void *pNext) {
         case VK_STRUCTURE_TYPE_DEVICE_DIAGNOSTICS_CONFIG_CREATE_INFO_NV:
             delete reinterpret_cast<const safe_VkDeviceDiagnosticsConfigCreateInfoNV *>(header);
             break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT:
+            delete reinterpret_cast<const safe_VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT *>(header);
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT:
+            delete reinterpret_cast<const safe_VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT *>(header);
+            break;
+        case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT:
+            delete reinterpret_cast<const safe_VkGraphicsPipelineLibraryCreateInfoEXT *>(header);
+            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_FEATURES_NV:
             delete reinterpret_cast<const safe_VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV *>(header);
             break;
@@ -51662,6 +51974,9 @@ void FreePnextChain(const void *pNext) {
         case VK_STRUCTURE_TYPE_PIPELINE_COLOR_WRITE_CREATE_INFO_EXT:
             delete reinterpret_cast<const safe_VkPipelineColorWriteCreateInfoEXT *>(header);
             break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVES_GENERATED_QUERY_FEATURES_EXT:
+            delete reinterpret_cast<const safe_VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT *>(header);
+            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT:
             delete reinterpret_cast<const safe_VkPhysicalDeviceImageViewMinLodFeaturesEXT *>(header);
             break;
@@ -51673,6 +51988,9 @@ void FreePnextChain(const void *pNext) {
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT:
             delete reinterpret_cast<const safe_VkPhysicalDeviceMultiDrawPropertiesEXT *>(header);
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_2D_VIEW_OF_3D_FEATURES_EXT:
+            delete reinterpret_cast<const safe_VkPhysicalDeviceImage2DViewOf3DFeaturesEXT *>(header);
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BORDER_COLOR_SWIZZLE_FEATURES_EXT:
             delete reinterpret_cast<const safe_VkPhysicalDeviceBorderColorSwizzleFeaturesEXT *>(header);

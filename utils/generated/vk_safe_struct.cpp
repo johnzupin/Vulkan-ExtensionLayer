@@ -26756,6 +26756,112 @@ void safe_VkCheckpointData2NV::initialize(const safe_VkCheckpointData2NV* copy_s
     pNext = SafePnextCopy(copy_src->pNext);
 }
 
+safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR::safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR(const VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR* in_struct) :
+    sType(in_struct->sType),
+    fragmentShaderBarycentric(in_struct->fragmentShaderBarycentric)
+{
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR::safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR() :
+    sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR),
+    pNext(nullptr)
+{}
+
+safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR::safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR(const safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR& copy_src)
+{
+    sType = copy_src.sType;
+    fragmentShaderBarycentric = copy_src.fragmentShaderBarycentric;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR& safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR::operator=(const safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR& copy_src)
+{
+    if (&copy_src == this) return *this;
+
+    if (pNext)
+        FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    fragmentShaderBarycentric = copy_src.fragmentShaderBarycentric;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR::~safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR()
+{
+    if (pNext)
+        FreePnextChain(pNext);
+}
+
+void safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR::initialize(const VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR* in_struct)
+{
+    sType = in_struct->sType;
+    fragmentShaderBarycentric = in_struct->fragmentShaderBarycentric;
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+void safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR::initialize(const safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR* copy_src)
+{
+    sType = copy_src->sType;
+    fragmentShaderBarycentric = copy_src->fragmentShaderBarycentric;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
+safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR::safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR(const VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR* in_struct) :
+    sType(in_struct->sType),
+    triStripVertexOrderIndependentOfProvokingVertex(in_struct->triStripVertexOrderIndependentOfProvokingVertex)
+{
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR::safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR() :
+    sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR),
+    pNext(nullptr)
+{}
+
+safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR::safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR(const safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR& copy_src)
+{
+    sType = copy_src.sType;
+    triStripVertexOrderIndependentOfProvokingVertex = copy_src.triStripVertexOrderIndependentOfProvokingVertex;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR& safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR::operator=(const safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR& copy_src)
+{
+    if (&copy_src == this) return *this;
+
+    if (pNext)
+        FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    triStripVertexOrderIndependentOfProvokingVertex = copy_src.triStripVertexOrderIndependentOfProvokingVertex;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR::~safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR()
+{
+    if (pNext)
+        FreePnextChain(pNext);
+}
+
+void safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR::initialize(const VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR* in_struct)
+{
+    sType = in_struct->sType;
+    triStripVertexOrderIndependentOfProvokingVertex = in_struct->triStripVertexOrderIndependentOfProvokingVertex;
+    pNext = SafePnextCopy(in_struct->pNext);
+}
+
+void safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR::initialize(const safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR* copy_src)
+{
+    sType = copy_src->sType;
+    triStripVertexOrderIndependentOfProvokingVertex = copy_src->triStripVertexOrderIndependentOfProvokingVertex;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
 safe_VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR::safe_VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR(const VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR* in_struct) :
     sType(in_struct->sType),
     shaderSubgroupUniformControlFlow(in_struct->shaderSubgroupUniformControlFlow)
@@ -38730,59 +38836,6 @@ void safe_VkPhysicalDeviceMeshShaderPropertiesNV::initialize(const safe_VkPhysic
     }
 }
 
-safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV::safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV(const VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV* in_struct) :
-    sType(in_struct->sType),
-    fragmentShaderBarycentric(in_struct->fragmentShaderBarycentric)
-{
-    pNext = SafePnextCopy(in_struct->pNext);
-}
-
-safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV::safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV() :
-    sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_NV),
-    pNext(nullptr)
-{}
-
-safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV::safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV(const safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV& copy_src)
-{
-    sType = copy_src.sType;
-    fragmentShaderBarycentric = copy_src.fragmentShaderBarycentric;
-    pNext = SafePnextCopy(copy_src.pNext);
-}
-
-safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV& safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV::operator=(const safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV& copy_src)
-{
-    if (&copy_src == this) return *this;
-
-    if (pNext)
-        FreePnextChain(pNext);
-
-    sType = copy_src.sType;
-    fragmentShaderBarycentric = copy_src.fragmentShaderBarycentric;
-    pNext = SafePnextCopy(copy_src.pNext);
-
-    return *this;
-}
-
-safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV::~safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV()
-{
-    if (pNext)
-        FreePnextChain(pNext);
-}
-
-void safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV::initialize(const VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV* in_struct)
-{
-    sType = in_struct->sType;
-    fragmentShaderBarycentric = in_struct->fragmentShaderBarycentric;
-    pNext = SafePnextCopy(in_struct->pNext);
-}
-
-void safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV::initialize(const safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV* copy_src)
-{
-    sType = copy_src->sType;
-    fragmentShaderBarycentric = copy_src->fragmentShaderBarycentric;
-    pNext = SafePnextCopy(copy_src->pNext);
-}
-
 safe_VkPhysicalDeviceShaderImageFootprintFeaturesNV::safe_VkPhysicalDeviceShaderImageFootprintFeaturesNV(const VkPhysicalDeviceShaderImageFootprintFeaturesNV* in_struct) :
     sType(in_struct->sType),
     imageFootprint(in_struct->imageFootprint)
@@ -43979,26 +44032,26 @@ void safe_VkGraphicsPipelineLibraryCreateInfoEXT::initialize(const safe_VkGraphi
     pNext = SafePnextCopy(copy_src->pNext);
 }
 
-safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT::safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT(const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT* in_struct) :
+safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD::safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD(const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD* in_struct) :
     sType(in_struct->sType),
     shaderEarlyAndLateFragmentTests(in_struct->shaderEarlyAndLateFragmentTests)
 {
     pNext = SafePnextCopy(in_struct->pNext);
 }
 
-safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT::safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT() :
-    sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_EXT),
+safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD::safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD() :
+    sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_AMD),
     pNext(nullptr)
 {}
 
-safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT::safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT(const safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT& copy_src)
+safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD::safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD(const safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD& copy_src)
 {
     sType = copy_src.sType;
     shaderEarlyAndLateFragmentTests = copy_src.shaderEarlyAndLateFragmentTests;
     pNext = SafePnextCopy(copy_src.pNext);
 }
 
-safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT& safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT::operator=(const safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT& copy_src)
+safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD& safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD::operator=(const safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD& copy_src)
 {
     if (&copy_src == this) return *this;
 
@@ -44012,20 +44065,20 @@ safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT& safe_VkPhysical
     return *this;
 }
 
-safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT::~safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT()
+safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD::~safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD()
 {
     if (pNext)
         FreePnextChain(pNext);
 }
 
-void safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT::initialize(const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT* in_struct)
+void safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD::initialize(const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD* in_struct)
 {
     sType = in_struct->sType;
     shaderEarlyAndLateFragmentTests = in_struct->shaderEarlyAndLateFragmentTests;
     pNext = SafePnextCopy(in_struct->pNext);
 }
 
-void safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT::initialize(const safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT* copy_src)
+void safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD::initialize(const safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD* copy_src)
 {
     sType = copy_src->sType;
     shaderEarlyAndLateFragmentTests = copy_src->shaderEarlyAndLateFragmentTests;
@@ -48801,129 +48854,149 @@ void safe_VkRenderPassCreationControlEXT::initialize(const safe_VkRenderPassCrea
     pNext = SafePnextCopy(copy_src->pNext);
 }
 
-safe_VkRenderPassCreationFeedbackInfoEXT::safe_VkRenderPassCreationFeedbackInfoEXT(const VkRenderPassCreationFeedbackInfoEXT* in_struct) :
+safe_VkRenderPassCreationFeedbackCreateInfoEXT::safe_VkRenderPassCreationFeedbackCreateInfoEXT(const VkRenderPassCreationFeedbackCreateInfoEXT* in_struct) :
     sType(in_struct->sType),
-    postMergeSubpassCount(in_struct->postMergeSubpassCount)
+    pRenderPassFeedback(nullptr)
 {
     pNext = SafePnextCopy(in_struct->pNext);
-}
-
-safe_VkRenderPassCreationFeedbackInfoEXT::safe_VkRenderPassCreationFeedbackInfoEXT() :
-    sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_INFO_EXT),
-    pNext(nullptr)
-{}
-
-safe_VkRenderPassCreationFeedbackInfoEXT::safe_VkRenderPassCreationFeedbackInfoEXT(const safe_VkRenderPassCreationFeedbackInfoEXT& copy_src)
-{
-    sType = copy_src.sType;
-    postMergeSubpassCount = copy_src.postMergeSubpassCount;
-    pNext = SafePnextCopy(copy_src.pNext);
-}
-
-safe_VkRenderPassCreationFeedbackInfoEXT& safe_VkRenderPassCreationFeedbackInfoEXT::operator=(const safe_VkRenderPassCreationFeedbackInfoEXT& copy_src)
-{
-    if (&copy_src == this) return *this;
-
-    if (pNext)
-        FreePnextChain(pNext);
-
-    sType = copy_src.sType;
-    postMergeSubpassCount = copy_src.postMergeSubpassCount;
-    pNext = SafePnextCopy(copy_src.pNext);
-
-    return *this;
-}
-
-safe_VkRenderPassCreationFeedbackInfoEXT::~safe_VkRenderPassCreationFeedbackInfoEXT()
-{
-    if (pNext)
-        FreePnextChain(pNext);
-}
-
-void safe_VkRenderPassCreationFeedbackInfoEXT::initialize(const VkRenderPassCreationFeedbackInfoEXT* in_struct)
-{
-    sType = in_struct->sType;
-    postMergeSubpassCount = in_struct->postMergeSubpassCount;
-    pNext = SafePnextCopy(in_struct->pNext);
-}
-
-void safe_VkRenderPassCreationFeedbackInfoEXT::initialize(const safe_VkRenderPassCreationFeedbackInfoEXT* copy_src)
-{
-    sType = copy_src->sType;
-    postMergeSubpassCount = copy_src->postMergeSubpassCount;
-    pNext = SafePnextCopy(copy_src->pNext);
-}
-
-safe_VkRenderPassSubpassFeedbackInfoEXT::safe_VkRenderPassSubpassFeedbackInfoEXT(const VkRenderPassSubpassFeedbackInfoEXT* in_struct) :
-    sType(in_struct->sType),
-    subpassMergeStatus(in_struct->subpassMergeStatus),
-    postMergeIndex(in_struct->postMergeIndex)
-{
-    pNext = SafePnextCopy(in_struct->pNext);
-    for (uint32_t i = 0; i < VK_MAX_DESCRIPTION_SIZE; ++i) {
-        description[i] = in_struct->description[i];
+    if (in_struct->pRenderPassFeedback) {
+        pRenderPassFeedback = new VkRenderPassCreationFeedbackInfoEXT(*in_struct->pRenderPassFeedback);
     }
 }
 
-safe_VkRenderPassSubpassFeedbackInfoEXT::safe_VkRenderPassSubpassFeedbackInfoEXT() :
-    sType(VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_INFO_EXT),
-    pNext(nullptr)
+safe_VkRenderPassCreationFeedbackCreateInfoEXT::safe_VkRenderPassCreationFeedbackCreateInfoEXT() :
+    sType(VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_CREATE_INFO_EXT),
+    pNext(nullptr),
+    pRenderPassFeedback(nullptr)
 {}
 
-safe_VkRenderPassSubpassFeedbackInfoEXT::safe_VkRenderPassSubpassFeedbackInfoEXT(const safe_VkRenderPassSubpassFeedbackInfoEXT& copy_src)
+safe_VkRenderPassCreationFeedbackCreateInfoEXT::safe_VkRenderPassCreationFeedbackCreateInfoEXT(const safe_VkRenderPassCreationFeedbackCreateInfoEXT& copy_src)
 {
     sType = copy_src.sType;
-    subpassMergeStatus = copy_src.subpassMergeStatus;
-    postMergeIndex = copy_src.postMergeIndex;
+    pRenderPassFeedback = nullptr;
     pNext = SafePnextCopy(copy_src.pNext);
-    for (uint32_t i = 0; i < VK_MAX_DESCRIPTION_SIZE; ++i) {
-        description[i] = copy_src.description[i];
+    if (copy_src.pRenderPassFeedback) {
+        pRenderPassFeedback = new VkRenderPassCreationFeedbackInfoEXT(*copy_src.pRenderPassFeedback);
     }
 }
 
-safe_VkRenderPassSubpassFeedbackInfoEXT& safe_VkRenderPassSubpassFeedbackInfoEXT::operator=(const safe_VkRenderPassSubpassFeedbackInfoEXT& copy_src)
+safe_VkRenderPassCreationFeedbackCreateInfoEXT& safe_VkRenderPassCreationFeedbackCreateInfoEXT::operator=(const safe_VkRenderPassCreationFeedbackCreateInfoEXT& copy_src)
 {
     if (&copy_src == this) return *this;
 
+    if (pRenderPassFeedback)
+        delete pRenderPassFeedback;
     if (pNext)
         FreePnextChain(pNext);
 
     sType = copy_src.sType;
-    subpassMergeStatus = copy_src.subpassMergeStatus;
-    postMergeIndex = copy_src.postMergeIndex;
+    pRenderPassFeedback = nullptr;
     pNext = SafePnextCopy(copy_src.pNext);
-    for (uint32_t i = 0; i < VK_MAX_DESCRIPTION_SIZE; ++i) {
-        description[i] = copy_src.description[i];
+    if (copy_src.pRenderPassFeedback) {
+        pRenderPassFeedback = new VkRenderPassCreationFeedbackInfoEXT(*copy_src.pRenderPassFeedback);
     }
 
     return *this;
 }
 
-safe_VkRenderPassSubpassFeedbackInfoEXT::~safe_VkRenderPassSubpassFeedbackInfoEXT()
+safe_VkRenderPassCreationFeedbackCreateInfoEXT::~safe_VkRenderPassCreationFeedbackCreateInfoEXT()
 {
+    if (pRenderPassFeedback)
+        delete pRenderPassFeedback;
     if (pNext)
         FreePnextChain(pNext);
 }
 
-void safe_VkRenderPassSubpassFeedbackInfoEXT::initialize(const VkRenderPassSubpassFeedbackInfoEXT* in_struct)
+void safe_VkRenderPassCreationFeedbackCreateInfoEXT::initialize(const VkRenderPassCreationFeedbackCreateInfoEXT* in_struct)
 {
     sType = in_struct->sType;
-    subpassMergeStatus = in_struct->subpassMergeStatus;
-    postMergeIndex = in_struct->postMergeIndex;
+    pRenderPassFeedback = nullptr;
     pNext = SafePnextCopy(in_struct->pNext);
-    for (uint32_t i = 0; i < VK_MAX_DESCRIPTION_SIZE; ++i) {
-        description[i] = in_struct->description[i];
+    if (in_struct->pRenderPassFeedback) {
+        pRenderPassFeedback = new VkRenderPassCreationFeedbackInfoEXT(*in_struct->pRenderPassFeedback);
     }
 }
 
-void safe_VkRenderPassSubpassFeedbackInfoEXT::initialize(const safe_VkRenderPassSubpassFeedbackInfoEXT* copy_src)
+void safe_VkRenderPassCreationFeedbackCreateInfoEXT::initialize(const safe_VkRenderPassCreationFeedbackCreateInfoEXT* copy_src)
 {
     sType = copy_src->sType;
-    subpassMergeStatus = copy_src->subpassMergeStatus;
-    postMergeIndex = copy_src->postMergeIndex;
+    pRenderPassFeedback = nullptr;
     pNext = SafePnextCopy(copy_src->pNext);
-    for (uint32_t i = 0; i < VK_MAX_DESCRIPTION_SIZE; ++i) {
-        description[i] = copy_src->description[i];
+    if (copy_src->pRenderPassFeedback) {
+        pRenderPassFeedback = new VkRenderPassCreationFeedbackInfoEXT(*copy_src->pRenderPassFeedback);
+    }
+}
+
+safe_VkRenderPassSubpassFeedbackCreateInfoEXT::safe_VkRenderPassSubpassFeedbackCreateInfoEXT(const VkRenderPassSubpassFeedbackCreateInfoEXT* in_struct) :
+    sType(in_struct->sType),
+    pSubpassFeedback(nullptr)
+{
+    pNext = SafePnextCopy(in_struct->pNext);
+    if (in_struct->pSubpassFeedback) {
+        pSubpassFeedback = new VkRenderPassSubpassFeedbackInfoEXT(*in_struct->pSubpassFeedback);
+    }
+}
+
+safe_VkRenderPassSubpassFeedbackCreateInfoEXT::safe_VkRenderPassSubpassFeedbackCreateInfoEXT() :
+    sType(VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_CREATE_INFO_EXT),
+    pNext(nullptr),
+    pSubpassFeedback(nullptr)
+{}
+
+safe_VkRenderPassSubpassFeedbackCreateInfoEXT::safe_VkRenderPassSubpassFeedbackCreateInfoEXT(const safe_VkRenderPassSubpassFeedbackCreateInfoEXT& copy_src)
+{
+    sType = copy_src.sType;
+    pSubpassFeedback = nullptr;
+    pNext = SafePnextCopy(copy_src.pNext);
+    if (copy_src.pSubpassFeedback) {
+        pSubpassFeedback = new VkRenderPassSubpassFeedbackInfoEXT(*copy_src.pSubpassFeedback);
+    }
+}
+
+safe_VkRenderPassSubpassFeedbackCreateInfoEXT& safe_VkRenderPassSubpassFeedbackCreateInfoEXT::operator=(const safe_VkRenderPassSubpassFeedbackCreateInfoEXT& copy_src)
+{
+    if (&copy_src == this) return *this;
+
+    if (pSubpassFeedback)
+        delete pSubpassFeedback;
+    if (pNext)
+        FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    pSubpassFeedback = nullptr;
+    pNext = SafePnextCopy(copy_src.pNext);
+    if (copy_src.pSubpassFeedback) {
+        pSubpassFeedback = new VkRenderPassSubpassFeedbackInfoEXT(*copy_src.pSubpassFeedback);
+    }
+
+    return *this;
+}
+
+safe_VkRenderPassSubpassFeedbackCreateInfoEXT::~safe_VkRenderPassSubpassFeedbackCreateInfoEXT()
+{
+    if (pSubpassFeedback)
+        delete pSubpassFeedback;
+    if (pNext)
+        FreePnextChain(pNext);
+}
+
+void safe_VkRenderPassSubpassFeedbackCreateInfoEXT::initialize(const VkRenderPassSubpassFeedbackCreateInfoEXT* in_struct)
+{
+    sType = in_struct->sType;
+    pSubpassFeedback = nullptr;
+    pNext = SafePnextCopy(in_struct->pNext);
+    if (in_struct->pSubpassFeedback) {
+        pSubpassFeedback = new VkRenderPassSubpassFeedbackInfoEXT(*in_struct->pSubpassFeedback);
+    }
+}
+
+void safe_VkRenderPassSubpassFeedbackCreateInfoEXT::initialize(const safe_VkRenderPassSubpassFeedbackCreateInfoEXT* copy_src)
+{
+    sType = copy_src->sType;
+    pSubpassFeedback = nullptr;
+    pNext = SafePnextCopy(copy_src->pNext);
+    if (copy_src->pSubpassFeedback) {
+        pSubpassFeedback = new VkRenderPassSubpassFeedbackInfoEXT(*copy_src->pSubpassFeedback);
     }
 }
 
@@ -51141,6 +51214,12 @@ void *SafePnextCopy(const void *pNext) {
         case VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_2_NV:
             safe_pNext = new safe_VkQueueFamilyCheckpointProperties2NV(reinterpret_cast<const VkQueueFamilyCheckpointProperties2NV *>(pNext));
             break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR:
+            safe_pNext = new safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR(reinterpret_cast<const VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR *>(pNext));
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR:
+            safe_pNext = new safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR(reinterpret_cast<const VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR *>(pNext));
+            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_FEATURES_KHR:
             safe_pNext = new safe_VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR(reinterpret_cast<const VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR *>(pNext));
             break;
@@ -51354,9 +51433,6 @@ void *SafePnextCopy(const void *pNext) {
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV:
             safe_pNext = new safe_VkPhysicalDeviceMeshShaderPropertiesNV(reinterpret_cast<const VkPhysicalDeviceMeshShaderPropertiesNV *>(pNext));
             break;
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_NV:
-            safe_pNext = new safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV(reinterpret_cast<const VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV *>(pNext));
-            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_FOOTPRINT_FEATURES_NV:
             safe_pNext = new safe_VkPhysicalDeviceShaderImageFootprintFeaturesNV(reinterpret_cast<const VkPhysicalDeviceShaderImageFootprintFeaturesNV *>(pNext));
             break;
@@ -51531,8 +51607,8 @@ void *SafePnextCopy(const void *pNext) {
         case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT:
             safe_pNext = new safe_VkGraphicsPipelineLibraryCreateInfoEXT(reinterpret_cast<const VkGraphicsPipelineLibraryCreateInfoEXT *>(pNext));
             break;
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_EXT:
-            safe_pNext = new safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT(reinterpret_cast<const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT *>(pNext));
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_AMD:
+            safe_pNext = new safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD(reinterpret_cast<const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD *>(pNext));
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_FEATURES_NV:
             safe_pNext = new safe_VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV(reinterpret_cast<const VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV *>(pNext));
@@ -51684,11 +51760,11 @@ void *SafePnextCopy(const void *pNext) {
         case VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_CONTROL_EXT:
             safe_pNext = new safe_VkRenderPassCreationControlEXT(reinterpret_cast<const VkRenderPassCreationControlEXT *>(pNext));
             break;
-        case VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_INFO_EXT:
-            safe_pNext = new safe_VkRenderPassCreationFeedbackInfoEXT(reinterpret_cast<const VkRenderPassCreationFeedbackInfoEXT *>(pNext));
+        case VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_CREATE_INFO_EXT:
+            safe_pNext = new safe_VkRenderPassCreationFeedbackCreateInfoEXT(reinterpret_cast<const VkRenderPassCreationFeedbackCreateInfoEXT *>(pNext));
             break;
-        case VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_INFO_EXT:
-            safe_pNext = new safe_VkRenderPassSubpassFeedbackInfoEXT(reinterpret_cast<const VkRenderPassSubpassFeedbackInfoEXT *>(pNext));
+        case VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_CREATE_INFO_EXT:
+            safe_pNext = new safe_VkRenderPassSubpassFeedbackCreateInfoEXT(reinterpret_cast<const VkRenderPassSubpassFeedbackCreateInfoEXT *>(pNext));
             break;
         case VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR:
             safe_pNext = new safe_VkWriteDescriptorSetAccelerationStructureKHR(reinterpret_cast<const VkWriteDescriptorSetAccelerationStructureKHR *>(pNext));
@@ -52356,6 +52432,12 @@ void FreePnextChain(const void *pNext) {
         case VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_2_NV:
             delete reinterpret_cast<const safe_VkQueueFamilyCheckpointProperties2NV *>(header);
             break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR:
+            delete reinterpret_cast<const safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR *>(header);
+            break;
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR:
+            delete reinterpret_cast<const safe_VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR *>(header);
+            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_FEATURES_KHR:
             delete reinterpret_cast<const safe_VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR *>(header);
             break;
@@ -52569,9 +52651,6 @@ void FreePnextChain(const void *pNext) {
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV:
             delete reinterpret_cast<const safe_VkPhysicalDeviceMeshShaderPropertiesNV *>(header);
             break;
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_NV:
-            delete reinterpret_cast<const safe_VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV *>(header);
-            break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_FOOTPRINT_FEATURES_NV:
             delete reinterpret_cast<const safe_VkPhysicalDeviceShaderImageFootprintFeaturesNV *>(header);
             break;
@@ -52746,8 +52825,8 @@ void FreePnextChain(const void *pNext) {
         case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT:
             delete reinterpret_cast<const safe_VkGraphicsPipelineLibraryCreateInfoEXT *>(header);
             break;
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_EXT:
-            delete reinterpret_cast<const safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT *>(header);
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_AMD:
+            delete reinterpret_cast<const safe_VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD *>(header);
             break;
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_FEATURES_NV:
             delete reinterpret_cast<const safe_VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV *>(header);
@@ -52899,11 +52978,11 @@ void FreePnextChain(const void *pNext) {
         case VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_CONTROL_EXT:
             delete reinterpret_cast<const safe_VkRenderPassCreationControlEXT *>(header);
             break;
-        case VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_INFO_EXT:
-            delete reinterpret_cast<const safe_VkRenderPassCreationFeedbackInfoEXT *>(header);
+        case VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_CREATE_INFO_EXT:
+            delete reinterpret_cast<const safe_VkRenderPassCreationFeedbackCreateInfoEXT *>(header);
             break;
-        case VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_INFO_EXT:
-            delete reinterpret_cast<const safe_VkRenderPassSubpassFeedbackInfoEXT *>(header);
+        case VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_CREATE_INFO_EXT:
+            delete reinterpret_cast<const safe_VkRenderPassSubpassFeedbackCreateInfoEXT *>(header);
             break;
         case VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR:
             delete reinterpret_cast<const safe_VkWriteDescriptorSetAccelerationStructureKHR *>(header);

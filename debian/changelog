@@ -1,3 +1,26 @@
+vulkan-extensionlayer (1.3.231.0~rc1-1lunarg22.04-1) jammy; urgency=medium
+
+  [ John Zupin ]
+  * packaging: update control deps
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and -Tools to 1.3.225
+  * tests: Fix validation errors in unit tests
+  * build: Update Vulkan-Headers and -Tools to 1.3.226
+  * build: Update Vulkan-Headers and -Tools to 1.3.227
+  * build: Update Vulkan-Headers and -Tools to 1.3.228
+  * build: Update Vulkan-Headers and -Tools to 1.3.229
+  * build: Update Vulkan-Headers and -Tools to 1.2.230
+  * docs: Update BUILD.md
+  * build: Update known goods for 1.3.231
+
+  [ John Zupin ]
+  * packaging: update deps vers
+  * packaging: update rules
+  * packaging: update deps
+
+ -- john <john@odin>  Tue, 18 Oct 2022 14:21:12 -0600
+
 vulkan-extensionlayer (1.3.224.0~rc1-1lunarg20.04-1) focal; urgency=medium
 
   [ Jeremy Gebben ]

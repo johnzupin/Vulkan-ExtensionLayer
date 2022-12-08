@@ -1,6 +1,6 @@
 # ~~~
-# Copyright (c) 2014-2021 Valve Corporation
-# Copyright (c) 2014-2021 LunarG, Inc.
+# Copyright (c) 2014-2022 Valve Corporation
+# Copyright (c) 2014-2022 LunarG, Inc.
 # Copyright (c) 2019      Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,20 +37,6 @@ elseif(ANDROID)
     add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR)
 elseif(APPLE)
     add_definitions(-DVK_USE_PLATFORM_MACOS_MVK)
-elseif(UNIX AND NOT APPLE) # i.e. Linux
-    if(BUILD_WSI_XCB_SUPPORT)
-        add_definitions(-DVK_USE_PLATFORM_XCB_KHR)
-    endif()
-
-    if(BUILD_WSI_XLIB_SUPPORT)
-        add_definitions(-DVK_USE_PLATFORM_XLIB_KHR)
-    endif()
-
-    if(BUILD_WSI_WAYLAND_SUPPORT)
-        add_definitions(-DVK_USE_PLATFORM_WAYLAND_KHR)
-    endif()
-else()
-    message(FATAL_ERROR "Unsupported Platform!")
 endif()
 
 if(WIN32)
@@ -60,9 +46,6 @@ if(WIN32)
     if(MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267")
     endif()
-
-else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
 
@@ -86,6 +69,4 @@ endif()
 install(TARGETS VkExtLayer_utils DESTINATION ${CMAKE_INSTALL_LIBDIR})
 set_target_properties(VkExtLayer_utils PROPERTIES LINKER_LANGUAGE CXX)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}
-                    ${CMAKE_CURRENT_SOURCE_DIR}/generated
-                    ${VulkanHeaders_INCLUDE_DIRS})
-
+                    ${CMAKE_CURRENT_SOURCE_DIR}/generated)

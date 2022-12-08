@@ -16,7 +16,7 @@
 
 1. Python >= 3.7 (3.6 may work, 3.5 and earlier is not supported)
 1. CMake >= 3.10.2
-1. C++ >= c++11 compiler. See platform-specific sections below for supported compiler versions.
+1. C++ >= c++17 compiler. See platform-specific sections below for supported compiler versions.
 
 ## Building
 
@@ -253,9 +253,6 @@ specific requirements for configuring and building these components.
   execution.
 - Please use `update_deps.py --help` to list additional options and read the
   internal documentation in `update_deps.py` for further information.
-- You can build against different C++ standards by setting the
-  `VEL_CPP_STANDARD` option at cmake generation time. Current code is writtent
-  to compile under C++11.
 
 ### Generated source code
 
@@ -291,7 +288,6 @@ on/off options currently supported by this repository:
 | BUILD_WSI_XCB_SUPPORT | Linux | `ON` | Build the components with XCB support. |
 | BUILD_WSI_XLIB_SUPPORT | Linux | `ON` | Build the components with Xlib support. |
 | BUILD_WSI_WAYLAND_SUPPORT | Linux | `ON` | Build the components with Wayland support. |
-| USE_CCACHE | Linux | `OFF` | Enable caching with the CCache program. |
 
 The following is a table of all string options currently supported by this repository:
 
@@ -482,8 +478,8 @@ Extension layer tests use the "googletest" testing framework.)
 ### Linux Build Requirements
 
 This repository has been built and tested on the two most recent Ubuntu LTS
-versions. Currently, the oldest supported version is Ubuntu 16.04, meaning
-that the minimum officially supported C++11 compiler version is GCC 5.4.0,
+versions. Currently, the oldest supported version is Ubuntu 18.04, meaning
+that the minimum officially supported C++17 compiler version is GCC 7.3.0,
 although earlier versions may work. It should be straightforward to adapt this
 repository to other Linux distributions.
 
@@ -576,8 +572,6 @@ to specify the number of cores to use for the build. For example:
 You can also use
 
     cmake --build .
-
-If your build system supports ccache, you can enable that via CMake option `-DUSE_CCACHE=On`
 
 ### Linux Notes
 

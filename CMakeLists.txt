@@ -15,29 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ~~~
-
-# CMake project initialization ---------------------------------------------------------------------------------------------------
-# This section contains pre-project() initialization, and ends with the project() command.
-
 cmake_minimum_required(VERSION 3.10.2)
-
-# Apple: Must be set before enable_language() or project() as it may influence configuration of the toolchain and flags.
-set(CMAKE_OSX_DEPLOYMENT_TARGET "10.12" CACHE STRING "Minimum OS X deployment version")
 
 project(Vulkan-ExtensionLayer)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 enable_testing()
-
-# User-interface declarations ----------------------------------------------------------------------------------------------------
-# This section contains variables that affect development GUIs (e.g. CMake GUI and IDEs), such as option(), folders, and variables
-# with the CACHE property.
-
-option(VEL_CPP_STANDARD "Set the C++ standard to build against. The value will be passed to cmake's CXX_STANDARD property. Default = 11" 11)
-if (NOT VEL_CPP_STANDARD)
-    set(VEL_CPP_STANDARD 11)
-endif()
 
 # Enable beta Vulkan extensions
 add_definitions(-DVK_ENABLE_BETA_EXTENSIONS)
@@ -50,7 +34,9 @@ if (UPDATE_DEPS)
     if (CMAKE_GENERATOR_PLATFORM)
         set(_target_arch ${CMAKE_GENERATOR_PLATFORM})
     else()
-        message(WARNING "CMAKE_GENERATOR_PLATFORM not set. Using x64 as target architecture.")
+        if (MSVC_IDE)
+            message(WARNING "CMAKE_GENERATOR_PLATFORM not set. Using x64 as target architecture.")
+        endif()
         set(_target_arch x64)
     endif()
 
@@ -101,28 +87,15 @@ endif()
 if (GOOGLETEST_INSTALL_DIR)
     list(APPEND CMAKE_PREFIX_PATH ${GOOGLETEST_INSTALL_DIR})
 endif()
-
-if (TARGET Vulkan::Headers)
-    message(STATUS "Using Vulkan headers from Vulkan::Headers target")
-    get_target_property(VulkanHeaders_INCLUDE_DIRS Vulkan::Headers INTERFACE_INCLUDE_DIRECTORIES)
-    get_target_property(VulkanRegistry_DIR Vulkan::Registry INTERFACE_INCLUDE_DIRECTORIES)
-else()
-    find_package(VulkanHeaders REQUIRED)
-
-    # xxxnsubtil: this should eventually be replaced by exported targets
-    add_library(Vulkan-Headers INTERFACE)
-    target_include_directories(Vulkan-Headers INTERFACE ${VulkanHeaders_INCLUDE_DIRS})
-    add_library(Vulkan::Headers ALIAS Vulkan-Headers)
+if (VULKAN_HEADERS_INSTALL_DIR)
+    list(APPEND CMAKE_PREFIX_PATH ${VULKAN_HEADERS_INSTALL_DIR})
 endif()
 
-option(USE_CCACHE "Use ccache" OFF)
-if(USE_CCACHE)
-    find_program(CCACHE_FOUND ccache)
-    if(CCACHE_FOUND)
-        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-    endif()
-endif()
+find_package(VulkanHeaders CONFIG REQUIRED QUIET)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include(GNUInstallDirs)
@@ -132,18 +105,19 @@ if(WIN32 AND CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "default install path" FORCE)
 endif()
 
-if(APPLE)
-    # CMake versions 3 or later need CMAKE_MACOSX_RPATH defined. This avoids the CMP0042 policy message.
-    set(CMAKE_MACOSX_RPATH 1)
-endif()
-
 # Enable IDE GUI folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # "Helper" targets that don't have interesting source code should set their FOLDER property to this
 set(LAYERS_HELPER_FOLDER "Helper Targets")
 
+# NOTE: The idiom for open source projects is to not enable warnings as errors.
+# This reduces problems for users who simply want to build the repository.
+option(BUILD_WERROR "Treat compiler warnings as errors" OFF)
+if (BUILD_WERROR)
+    add_compile_options("$<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>")
+endif()
+
 # Platform-specific compiler switches
-option(BUILD_WERROR "Treat compiler warnings as errors" ON)
 if(MAKE_C_COMPILER_ID MATCHES "Clang")
     add_compile_options(-Wconversion
 
@@ -165,14 +139,6 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
                         -fno-builtin-memcmp
                         -fvisibility=hidden)
 
-    # Treat warnings as errors for versions of GCC and c++11-compliant Clang versions that are shipped on Ubuntu 18.04 or older.
-    if(BUILD_WERROR)
-        if ((CMAKE_COMPILER_IS_GNUCXX AND NOT (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.3.0)) OR
-           (("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang") AND (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 6.0.0)))
-            add_compile_options(-Werror)
-        endif()
-    endif()
-
     set(CMAKE_C_STANDARD 99)
 
     # For GCC version 7.1 or greater, we need to disable the implicit fallthrough warning since there's no consistent way to satisfy
@@ -181,10 +147,6 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
         add_compile_options(-Wimplicit-fallthrough=0)
     endif()
 elseif(MSVC)
-    if(BUILD_WERROR)
-        # Treat warnings as errors
-        add_compile_options("/WX")
-    endif()
     # Warn about nested declarations
     add_compile_options("/w34456")
     # Warn about potentially uninitialized variables
@@ -219,26 +181,27 @@ option(BUILD_LAYER_SUPPORT_FILES "Generate layer files" OFF) # For generating fi
 if(BUILD_TESTS)
     # Options for Linux only
     if(UNIX AND NOT APPLE) # i.e. Linux
-        include(FindPkgConfig)
+        find_package(PkgConfig REQUIRED QUIET) # Use PkgConfig to find Linux system libraries
+
         option(BUILD_WSI_XCB_SUPPORT "Build XCB WSI support" ON)
         option(BUILD_WSI_XLIB_SUPPORT "Build Xlib WSI support" ON)
         option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" ON)
-        set(DEMOS_WSI_SELECTION "XCB" CACHE STRING "Select WSI target for demos (XCB, XLIB, WAYLAND, DISPLAY)")
 
         if(BUILD_WSI_XCB_SUPPORT)
-            find_package(XCB REQUIRED)
+            pkg_check_modules(XCB REQUIRED QUIET IMPORTED_TARGET xcb)
+            add_definitions(-DVK_USE_PLATFORM_XCB_KHR)
         endif()
 
         if(BUILD_WSI_XLIB_SUPPORT)
-            find_package(X11 REQUIRED)
+            pkg_check_modules(X11 REQUIRED QUIET IMPORTED_TARGET x11)
+            add_definitions(-DVK_USE_PLATFORM_XLIB_KHR -DVK_USE_PLATFORM_XLIB_XRANDR_EXT)
         endif()
 
         if(BUILD_WSI_WAYLAND_SUPPORT)
-            find_package(Wayland REQUIRED)
-            include_directories(${WAYLAND_CLIENT_INCLUDE_DIR})
+            pkg_check_modules(WAYLAND REQUIRED QUIET IMPORTED_TARGET wayland-client)
+            add_definitions(-DVK_USE_PLATFORM_WAYLAND_KHR)
         endif()
     endif()
-
 
     set(GLSLANG_INSTALL_DIR "GLSLANG-NOTFOUND" CACHE PATH "Absolute path to a glslang install directory")
     if(NOT GLSLANG_INSTALL_DIR AND NOT DEFINED ENV{GLSLANG_INSTALL_DIR} AND NOT TARGET glslang)
@@ -347,10 +310,6 @@ if(BUILD_TESTS)
     set(GLSLANG_LIBRARIES ${GLSLANG_LIBRARIES} ${SPIRV_TOOLS_LIBRARIES})
 endif()
 
-# Generate dependent helper files ------------------------------------------------------------------------------------------------
-
-set(SCRIPTS_DIR "${PROJECT_SOURCE_DIR}/scripts")
-
 # uninstall target ---------------------------------------------------------------------------------------------------------------
 if(NOT TARGET uninstall)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
@@ -361,27 +320,21 @@ if(NOT TARGET uninstall)
     set_target_properties(uninstall PROPERTIES FOLDER ${LAYERS_HELPER_FOLDER})
 endif()
 
-# Fetch header version from vulkan_core.h ----------------------------------------------------------------------------------------
-file(STRINGS "${VulkanHeaders_INCLUDE_DIRS}/vulkan/vulkan_core.h" lines REGEX "^#define VK_HEADER_VERSION [0-9]+")
-list(LENGTH lines len)
-if(${len} EQUAL 1)
-    string(REGEX MATCHALL
-                 "[0-9]+"
-                 vk_header_version
-                 ${lines})
-else()
-    message(FATAL_ERROR "Unable to fetch version from vulkan_core.h")
-endif()
-
 # Optional codegen target --------------------------------------------------------------------------------------------------------
 if(PYTHONINTERP_FOUND)
-  add_custom_target(VulkanEL_generated_source
-                      COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/generate_source.py
-                              ${VulkanRegistry_DIR} --incremental
-                      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/utils/generated
-                      )
+    # Vulkan::Registry is treated as a header only library,
+    # in order to grab the registry directory we grab the include directory.
+    get_target_property(VulkanRegistry_DIR Vulkan::Registry INTERFACE_INCLUDE_DIRECTORIES)
+    if (NOT EXISTS "${VulkanRegistry_DIR}/vk.xml")
+        message(FATAL_ERROR "Unable to find vk.xml")
+    endif()
+
+    add_custom_target(VulkanEL_generated_source
+        COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/generate_source.py ${VulkanRegistry_DIR} --incremental
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/utils/generated
+    )
 else()
-  message("${PROJECT_NAME}: WARNING: VulkanEL_generated_source target requires python 3")
+    message("${PROJECT_NAME}: WARNING: VulkanEL_generated_source target requires python 3")
 endif()
 
 # Add subprojects ----------------------------------------------------------------------------------------------------------------

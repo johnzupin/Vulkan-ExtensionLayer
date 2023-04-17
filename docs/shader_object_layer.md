@@ -19,7 +19,7 @@ The `VK_EXT_shader_object` extension requires the `VK_KHR_maintenance2` and `VK_
 
 For an overview of how to configure layers, refer to the [Layers Overview and Configuration](https://vulkan.lunarg.com/doc/sdk/latest/windows/layer_configuration.html) document.
 
-The Shader object Layer settings are documented in the [Layer Details](https://vulkan.lunarg.com/doc/sdk/latest/windows/shader_object_layer.html#user-content-layer-details) section below.
+The Shader object Layer settings are documented in the [Layer Options](#layer-options) section below.
 
 The Shader object Layer can also be enabled and configured using vkconfig. See the [vkconfig](https://vulkan.lunarg.com/doc/sdk/latest/windows/vkconfig.html) documentation for more information.
 

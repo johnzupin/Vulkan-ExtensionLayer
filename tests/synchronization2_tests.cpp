@@ -28,8 +28,10 @@
 
 #include "extension_layer_tests.h"
 #include "synchronization2_tests.h"
+#include "vk_layer_config.h"
 
 void Sync2Test::SetUp() {
+    SetEnvironment("VK_SYNC2_FORCE_ENABLE", "1");
     VkExtensionLayerTest::SetUp();
     SetTargetApiVersion(VK_API_VERSION_1_2);
     VkExtensionLayerTest::AddSurfaceInstanceExtension();
@@ -37,9 +39,6 @@ void Sync2Test::SetUp() {
     ASSERT_NO_FATAL_FAILURE(InitFramework(m_errorMonitor));
 
     VkExtensionLayerTest::AddSwapchainDeviceExtension();
-    if (!CheckSynchronization2SupportAndInitState()) {
-        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
-    }
 }
 
 void Sync2Test::TearDown() {}
@@ -104,6 +103,9 @@ void Sync2Test::ValidOwnershipTransfer(ErrorMonitor *monitor, VkCommandBufferObj
 
 TEST_F(Sync2Test, OwnershipTranfersImage) {
     TEST_DESCRIPTION("Valid image ownership transfers that shouldn't create errors");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
 
     uint32_t no_gfx = m_device->QueueFamilyWithoutCapabilities(VK_QUEUE_GRAPHICS_BIT);
     if (no_gfx == UINT32_MAX) {
@@ -155,6 +157,9 @@ TEST_F(Sync2Test, OwnershipTranfersImage) {
 
 TEST_F(Sync2Test, OwnershipTranfersBuffer) {
     TEST_DESCRIPTION("Valid buffer ownership transfers that shouldn't create errors");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
 
     uint32_t no_gfx = m_device->QueueFamilyWithoutCapabilities(VK_QUEUE_GRAPHICS_BIT);
     if (no_gfx == UINT32_MAX) {
@@ -209,6 +214,9 @@ TEST_F(Sync2Test, OwnershipTranfersBuffer) {
 
 TEST_F(Sync2Test, SecondaryCommandBufferBarrier) {
     TEST_DESCRIPTION("Add a pipeline barrier in a secondary command buffer");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
 
     m_errorMonitor->ExpectSuccess();
 
@@ -382,6 +390,10 @@ TEST_F(Sync2Test, SecondaryCommandBufferBarrier) {
 
 TEST_F(Sync2Test, SecondaryCommandBufferImageLayoutTransitions) {
     TEST_DESCRIPTION("Perform an image layout transition in a secondary command buffer followed by a transition in the primary.");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
+
     VkResult err;
     auto depth_format = FindSupportedDepthStencilFormat(gpu());
     if (!depth_format) {
@@ -489,6 +501,9 @@ TEST_F(Sync2Test, SecondaryCommandBufferImageLayoutTransitions) {
 
 TEST_F(Sync2Test, QueueSubmitSemaphoresAndLayoutTracking) {
     TEST_DESCRIPTION("Submit multiple command buffers with chained semaphore signals and layout transitions");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
 
     m_errorMonitor->ExpectSuccess();
     VkCommandBuffer cmd_bufs[4];
@@ -597,6 +612,9 @@ TEST_F(Sync2Test, QueueSubmitSemaphoresAndLayoutTracking) {
 }
 
 TEST_F(Sync2Test, CommandBufferSimultaneousUseSync) {
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
     m_errorMonitor->ExpectSuccess();
     VkResult err;
 
@@ -659,6 +677,9 @@ TEST_F(Sync2Test, CommandBufferSimultaneousUseSync) {
 
 TEST_F(Sync2Test, BarrierLayoutToImageUsage) {
     TEST_DESCRIPTION("Ensure barriers' new and old VkImageLayout are compatible with their images' VkImageUsageFlags");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
     m_errorMonitor->ExpectSuccess();
 
     auto depth_format = FindSupportedDepthStencilFormat(gpu());
@@ -759,6 +780,9 @@ TEST_F(Sync2Test, BarrierLayoutToImageUsage) {
 
 TEST_F(Sync2Test, WaitEventThenSet) {
     TEST_DESCRIPTION("Wait on a event then set it after the wait has been submitted.");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
 
     m_errorMonitor->ExpectSuccess();
 
@@ -826,6 +850,9 @@ TEST_F(Sync2Test, TwoQueueSubmitsSeparateQueuesWithSemaphoreAndOneFenceTwoWFF) {
     TEST_DESCRIPTION(
         "Two command buffers, each in a separate QueueSubmit call submitted on separate queues, the second having a fence followed "
         "by two consecutive WaitForFences calls on the same fence.");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
 
     if ((m_device->queue_props.empty()) || (m_device->queue_props[0].queueCount < 2)) {
         GTEST_SKIP() << kSkipPrefix << "  Queue family needs to have multiple queues to run this test." << std::endl;
@@ -941,6 +968,9 @@ TEST_F(Sync2Test, TwoQueueSubmitsSeparateQueuesWithSemaphoreAndOneFenceTwoWFF) {
 TEST_F(Sync2Test, TwoSubmitInfosWithSemaphoreOneQueueSubmitsOneFence) {
     TEST_DESCRIPTION(
         "Two command buffers each in a separate SubmitInfo sent in a single QueueSubmit call followed by a WaitForFences call.");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
 
     m_errorMonitor->ExpectSuccess();
 
@@ -1040,6 +1070,9 @@ TEST_F(Sync2Test, TwoSubmitInfosWithSemaphoreOneQueueSubmitsOneFence) {
 
 TEST_F(Sync2Test, ClearDepthStencilWithValidRange) {
     TEST_DESCRIPTION("Record clear depth with a valid VkImageSubresourceRange");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
 
     ASSERT_NO_FATAL_FAILURE(InitRenderTarget());
 
@@ -1082,9 +1115,12 @@ TEST_F(Sync2Test, ClearDepthStencilWithValidRange) {
 
 TEST_F(Sync2Test, QueueSubmitTimelineSemaphore) {
     TEST_DESCRIPTION("Submit a queue with a timeline semaphore.");
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
 
-    auto timeline_features = lvl_init_struct<VkPhysicalDeviceTimelineSemaphoreFeatures>();
-    auto features2 = lvl_init_struct<VkPhysicalDeviceFeatures2KHR>(&timeline_features);
+    auto timeline_features = LvlInitStruct<VkPhysicalDeviceTimelineSemaphoreFeatures>();
+    auto features2 = LvlInitStruct<VkPhysicalDeviceFeatures2KHR>(&timeline_features);
     vk::GetPhysicalDeviceFeatures2(gpu(), &features2);
     if (!timeline_features.timelineSemaphore) {
         GTEST_SKIP() << "Timeline semaphores not supported.";
@@ -1203,7 +1239,7 @@ TEST_F(Sync2CompatTest, Vulkan10) {
     queue_info.queueFamilyIndex = 0;
     queue_info.queueCount = 1;
 
-    auto sync2_features = lvl_init_struct<VkPhysicalDeviceSynchronization2FeaturesKHR>();
+    auto sync2_features = LvlInitStruct<VkPhysicalDeviceSynchronization2FeaturesKHR>();
     sync2_features.synchronization2 = true;
     VkPhysicalDeviceFeatures features{};
     vk::GetPhysicalDeviceFeatures(gpus[0], &features);
@@ -1256,6 +1292,9 @@ TEST_F(Sync2CompatTest, Vulkan10) {
 }
 
 TEST_F(Sync2Test, SwapchainImage) {
+    if (!CheckSynchronization2SupportAndInitState()) {
+        GTEST_SKIP() << kSkipPrefix << " synchronization2 not supported, skipping test";
+    }
     if (!InitSwapchain()) {
         printf("%s Cannot create surface or swapchain, skipping CmdCopySwapchainImage test\n", kSkipPrefix);
         return;

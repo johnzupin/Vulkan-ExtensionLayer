@@ -2,9 +2,9 @@
 // See lvt_file_generator.py for modifications
 
 /*
- * Copyright (c) 2015-2022 The Khronos Group Inc.
- * Copyright (c) 2015-2022 Valve Corporation
- * Copyright (c) 2015-2022 LunarG, Inc.
+ * Copyright (c) 2015-2023 The Khronos Group Inc.
+ * Copyright (c) 2015-2023 Valve Corporation
+ * Copyright (c) 2015-2023 LunarG, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Author: Mark Lobodzinski <mark@lunarg.com>
  */
 
 
@@ -351,19 +349,30 @@ PFN_vkGetQueueCheckpointData2NV GetQueueCheckpointData2NV;
 #ifdef VK_USE_PLATFORM_MACOS_MVK
 PFN_vkCreateMacOSSurfaceMVK CreateMacOSSurfaceMVK;
 #endif // VK_USE_PLATFORM_MACOS_MVK
+PFN_vkCmdDecompressMemoryNV CmdDecompressMemoryNV;
+PFN_vkCmdDecompressMemoryIndirectCountNV CmdDecompressMemoryIndirectCountNV;
+PFN_vkCreateShadersEXT CreateShadersEXT;
+PFN_vkDestroyShaderEXT DestroyShaderEXT;
+PFN_vkGetShaderBinaryDataEXT GetShaderBinaryDataEXT;
+PFN_vkCmdBindShadersEXT CmdBindShadersEXT;
 
 
 void InitDispatchTable() {
 
 #if(WIN32)
     const char filename[] = "vulkan-1.dll";
+    auto lib_handle = open_library(filename);
 #elif(__APPLE__)
     const char filename[] = "libvulkan.dylib";
-#else
-    const char filename[] = "libvulkan.so";
-#endif
-
     auto lib_handle = open_library(filename);
+#else
+    const char *filename = "libvulkan.so";
+    auto lib_handle = open_library(filename);
+    if (!lib_handle) {
+        filename = "libvulkan.so.1";
+        lib_handle = open_library(filename);
+    }
+#endif
 
     if (lib_handle == nullptr) {
         printf("%s\n", open_library_error(filename));
@@ -647,6 +656,12 @@ void InitDispatchTable() {
 #ifdef VK_USE_PLATFORM_MACOS_MVK
     CreateMacOSSurfaceMVK = reinterpret_cast<PFN_vkCreateMacOSSurfaceMVK>(get_proc_address(lib_handle, "vkCreateMacOSSurfaceMVK"));
 #endif // VK_USE_PLATFORM_MACOS_MVK
+    CmdDecompressMemoryNV = reinterpret_cast<PFN_vkCmdDecompressMemoryNV>(get_proc_address(lib_handle, "vkCmdDecompressMemoryNV"));
+    CmdDecompressMemoryIndirectCountNV = reinterpret_cast<PFN_vkCmdDecompressMemoryIndirectCountNV>(get_proc_address(lib_handle, "vkCmdDecompressMemoryIndirectCountNV"));
+    CreateShadersEXT = reinterpret_cast<PFN_vkCreateShadersEXT>(get_proc_address(lib_handle, "vkCreateShadersEXT"));
+    DestroyShaderEXT = reinterpret_cast<PFN_vkDestroyShaderEXT>(get_proc_address(lib_handle, "vkDestroyShaderEXT"));
+    GetShaderBinaryDataEXT = reinterpret_cast<PFN_vkGetShaderBinaryDataEXT>(get_proc_address(lib_handle, "vkGetShaderBinaryDataEXT"));
+    CmdBindShadersEXT = reinterpret_cast<PFN_vkCmdBindShadersEXT>(get_proc_address(lib_handle, "vkCmdBindShadersEXT"));
 }
 
 } // namespace vk

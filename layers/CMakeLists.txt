@@ -16,21 +16,20 @@
 # limitations under the License.
 # ~~~
 
-if(WIN32)
-    set(TARGET_NAMES VkLayer_khronos_synchronization2) # timeline_semaphore doesn't build on windows yet
-else()
-    set(TARGET_NAMES VkLayer_khronos_timeline_semaphore VkLayer_khronos_synchronization2)
-endif()
-
 # System-specific macros to create a library target.
 macro(AddVkLayer target LAYER_COMPILE_DEFINITIONS)
-    add_library(VkLayer_${target} SHARED ${ARGN} VkLayer_${target}.def)
+    add_library(VkLayer_${target} MODULE ${ARGN})
     target_compile_definitions(VkLayer_${target} PUBLIC ${LAYER_COMPILE_DEFINITIONS})
     target_link_libraries(VkLayer_${target} PRIVATE VkExtLayer_utils Vulkan::Headers)
     if(MSVC)
         target_link_options(VkLayer_${target} PRIVATE /DEF:${CMAKE_CURRENT_SOURCE_DIR}/VkLayer_${target}.def)
         target_compile_definitions(VkLayer_${target} PUBLIC NOMINMAX)
-    elseif(APPLE OR MINGW OR ANDROID)
+    elseif(MINGW)
+        target_sources(VkLayer_${target} PRIVATE VkLayer_${target}.def)
+    elseif(APPLE)
+        message(DEBUG "Functions are exported via VEL_EXPORT")
+        set_target_properties(VkLayer_${target} PROPERTIES SUFFIX ".dylib")
+    elseif(ANDROID)
         message(DEBUG "Functions are exported via VEL_EXPORT")
     else()
         target_link_options(VkLayer_${target} PRIVATE LINKER:--version-script=${CMAKE_CURRENT_SOURCE_DIR}/libVkLayer_${target}.map,-Bsymbolic,--exclude-libs,ALL)
@@ -54,8 +53,6 @@ if(MSVC)
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpointer-arith -Wno-unused-function -Wno-sign-compare")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wpointer-arith -Wno-unused-function -Wno-sign-compare")
-    # Use of pthread_condattr_setclock requires a "recent" POSIX setting.
-    add_definitions(-D_POSIX_C_SOURCE=200112)
 endif()
 
 if(NOT WIN32)
@@ -73,11 +70,33 @@ set(SYNCHRONIZATION2_FILES
 AddVkLayer(khronos_synchronization2 ""
     ${SYNCHRONIZATION2_FILES})
 
+set(SHADER_OBJECT_FILES
+    shader_object.cpp)
+
+AddVkLayer(khronos_shader_object ""
+    ${SHADER_OBJECT_FILES})
+
+set(DECOMPRESSION_FILES
+    decompression/decompression.cpp)
+
+AddVkLayer(khronos_memory_decompression ""
+    ${DECOMPRESSION_FILES})
+
+set(TARGET_NAMES VkLayer_khronos_timeline_semaphore VkLayer_khronos_synchronization2 VkLayer_khronos_shader_object VkLayer_khronos_memory_decompression)
+
+# timeline_semaphore doesn't build on windows yet
+if (WIN32)
+    list(REMOVE_ITEM TARGET_NAMES "VkLayer_khronos_timeline_semaphore")
+endif()
+
 foreach(TARGET_NAME ${TARGET_NAMES})
     set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/json/${TARGET_NAME}.json.in")
     set(INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/intermediate-${TARGET_NAME}.json")
     set(OUTPUT_FILE_FINAL_NAME "${TARGET_NAME}.json")
     set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
+    if (WIN32)
+        set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_BINDIR}) # WIN32/MINGW expect the dll in the `bin` dir, this matches our WIN32 SDK process
+    endif()
 
     if (WIN32)
         set(JSON_LIBRARY_PATH ".\\\\${TARGET_NAME}.dll")
@@ -94,6 +113,12 @@ foreach(TARGET_NAME ${TARGET_NAMES})
     add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${INTERMEDIATE_FILE} $<TARGET_FILE_DIR:${TARGET_NAME}>/${OUTPUT_FILE_FINAL_NAME}
     )
+
+    # Don't install VkLayer_khronos_memory_decompression. We don't plan to release this for the 1.3.250 SDK release.
+    if (${TARGET_NAME} STREQUAL "VkLayer_khronos_memory_decompression")
+        continue()
+    endif()
+
     if (UNIX)
         set(UNIX_INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/unix_install_${TARGET_NAME}.json")
 
@@ -110,6 +135,9 @@ foreach(TARGET_NAME ${TARGET_NAMES})
 
     if (WIN32)
         install(FILES ${INTERMEDIATE_FILE} DESTINATION ${LAYER_INSTALL_DIR} RENAME ${OUTPUT_FILE_FINAL_NAME})
+    endif()
+    if (MSVC)
+        install(FILES $<TARGET_PDB_FILE:${TARGET_NAME}> DESTINATION ${LAYER_INSTALL_DIR})
     endif()
 
     install(TARGETS ${TARGET_NAME} DESTINATION ${LAYER_INSTALL_DIR})

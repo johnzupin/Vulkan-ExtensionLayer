@@ -1,36 +1,21 @@
 # Vulkan-ExtensionLayer
 
-Layers providing Vulkan features when native support is unavailable
-
-## Default branch changed to 'main' 2023-01-16
-
-As discussed in #158, the default branch of this repository is now 'main'. This change should be largely transparent to repository users, since github rewrites many references to the old 'master' branch to 'main'. However, if you have a checked-out local clone, you may wish to take the following steps as recommended by github:
-
-```sh
-git branch -m master main
-git fetch origin
-git branch -u origin/main main
-git remote set-head origin -a
-```
-
-## CI Build Status
-| Build Status |
-|:------------|
-| [![Build Status](https://github.com/KhronosGroup/Vulkan-ExtensionLayer/actions/workflows/build_windows.yml/badge.svg?branch=main)](https://github.com/KhronosGroup/Vulkan-ExtensionLayer/actions) |
-| [![Build Status](https://github.com/KhronosGroup/Vulkan-ExtensionLayer/actions/workflows/build_linux.yml/badge.svg?branch=main)](https://github.com/KhronosGroup/Vulkan-ExtensionLayer/actions) |
-| [![Build Status](https://github.com/KhronosGroup/Vulkan-ExtensionLayer/actions/workflows/build_macos.yml/badge.svg?branch=main)](https://github.com/KhronosGroup/Vulkan-ExtensionLayer/actions) |
-| [![Build Status](https://github.com/KhronosGroup/Vulkan-ExtensionLayer/actions/workflows/build_android.yml/badge.svg?branch=main)](https://github.com/KhronosGroup/Vulkan-ExtensionLayer/actions) |
-
 ## Introduction
 
 There are some extensions and features in Vulkan that are not available everywhere due to various reasons. While not available, some extensions are capable of being done as layer and mapping to any Vulkan implementation regardless of it supporting the desired functionality or not.
 
 ## Currently implemented extensions
 
-| Layer                               | Extension provided        | Version | File                        | Status   |
+| Layer                               | Extension provided        | Version | File(s)                     | Point of Contact|
 |:-----------------------------------:|:-------------------------:|:-------:|:---------------------------:|:--------:|
-| VK_LAYER_KHRONOS_timeline_semaphore | VK_KHR_timeline_semaphore | 1       | layers/timeline_semaphore.c | complete |
-| [VK_LAYER_KHRONOS_synchronization2](docs/synchronization2_layer.md)   | VK_KHR_synchronization2   | 1       | layers/synchronization2.cpp | complete |
+| VK_LAYER_KHRONOS_timeline_semaphore | VK_KHR_timeline_semaphore | 1       | layers/timeline_semaphore.c | [@llandwerlin-intel](https://github.com/llandwerlin-intel) |
+| [VK_LAYER_KHRONOS_synchronization2](docs/synchronization2_layer.md)   | VK_KHR_synchronization2   | 1       | layers/synchronization2.cpp | [@jeremyg-lunarg](https://github.com/jeremyg-lunarg) |
+| [VK_LAYER_KHRONOS_shader_object](docs/shader_object_layer.md)      | VK_EXT_shader_object| 1       | layers/shader_object.cpp    | [@daniel-story](https://github.com/daniel-story) |
+| [VK_LAYER_KHRONOS_memory_decompression](docs/memory_decompression_layer.md)   | VK_NV_memory_decompression   | 1       | layers/decompression/decompression.cpp | [@vkushwaha-nv](https://github.com/vkushwaha-nv) |
+
+If you find a problem with one of the layers, please file an Issue and tag the Point of Contact listed in the table above.
+
+NOTE: Not all layers are supported on every platform, please read the documentation for the layer for details.
 
 ## Information for Developing or Contributing:
 

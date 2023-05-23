@@ -1,8 +1,9 @@
 /*
  * Copyright (c) 2015-2022 The Khronos Group Inc.
- * Copyright (c) 2015-2022 Valve Corporation
+ * Copyright (c) 2015-2023 Valve Corporation
  * Copyright (c) 2015-2023 LunarG, Inc.
  * Copyright (c) 2015-2022 Google, Inc.
+ * Copyright (c) 2015-2023 Nvidia Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +23,14 @@
  * Author: Jeremy Kniager <jeremyk@lunarg.com>
  * Author: Shannon McPherson <shannon@lunarg.com>
  * Author: John Zulauf <jzulauf@lunarg.com>
+ * Author: Vikram Kushwaha <vkushwaha@nvidia.com>
  */
 #include "extension_layer_tests.h"
 #include "vk_typemap_helper.h"
+
+#if !defined(ANDROID)
+#include "test_layer_location.h"
+#endif
 
 // Global list of sType,size identifiers
 std::vector<std::pair<uint32_t, uint32_t>> custom_stype_info{};
@@ -185,13 +191,54 @@ bool CheckTimelineSemaphoreSupportAndInitState(VkRenderFramework *renderFramewor
     PFN_vkGetPhysicalDeviceFeatures2KHR vkGetPhysicalDeviceFeatures2KHR =
         (PFN_vkGetPhysicalDeviceFeatures2KHR)vk::GetInstanceProcAddr(renderFramework->instance(),
                                                                      "vkGetPhysicalDeviceFeatures2KHR");
-    auto timeline_semaphore_features = lvl_init_struct<VkPhysicalDeviceTimelineSemaphoreFeatures>();
-    auto features2 = lvl_init_struct<VkPhysicalDeviceFeatures2KHR>(&timeline_semaphore_features);
+    auto timeline_semaphore_features = LvlInitStruct<VkPhysicalDeviceTimelineSemaphoreFeatures>();
+    auto features2 = LvlInitStruct<VkPhysicalDeviceFeatures2KHR>(&timeline_semaphore_features);
     vkGetPhysicalDeviceFeatures2KHR(renderFramework->gpu(), &features2);
     if (!timeline_semaphore_features.timelineSemaphore) {
         return false;
     }
     renderFramework->InitState(nullptr, &features2);
+    return true;
+}
+
+bool VkExtensionLayerTest::CheckDecompressionSupportAndInitState() {
+    bool is_api_version_12_or_above =
+        VK_API_VERSION_MAJOR(m_instance_api_version) >= 1 && VK_API_VERSION_MINOR(m_instance_api_version) >= 2;
+    if (!is_api_version_12_or_above) {
+        // Decompression tests need Vulkan 1.2+
+        return false;
+    }
+
+    bool decompressionExtensionFound = false;
+    if (DeviceExtensionSupported(VK_NV_MEMORY_DECOMPRESSION_EXTENSION_NAME, 1)) {
+        decompressionExtensionFound = true;
+        m_device_extension_names.push_back(VK_NV_MEMORY_DECOMPRESSION_EXTENSION_NAME);
+    }
+
+    auto decompress_features = LvlInitStruct<VkPhysicalDeviceMemoryDecompressionFeaturesNV>();
+    auto features2 = LvlInitStruct<VkPhysicalDeviceFeatures2KHR>(&decompress_features);
+    vk::GetPhysicalDeviceFeatures2(gpu(), &features2);
+
+    VkPhysicalDeviceFeatures2 devFeatures = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
+    VkPhysicalDeviceMemoryDecompressionFeaturesNV decompressionFeature = {
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV};
+    devFeatures.pNext = &decompressionFeature;
+    vk::GetPhysicalDeviceFeatures2(gpu(), &devFeatures);
+
+    // Unsupported when neither the driver supports it nor the layer is present
+    if (!decompressionFeature.memoryDecompression && !decompressionExtensionFound) {
+        return false;
+    }
+
+    InitState(nullptr, &features2, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+    vk::QueueSubmit2KHR = reinterpret_cast<PFN_vkQueueSubmit2KHR>(vk::GetDeviceProcAddr(device(), "vkQueueSubmit2KHR"));
+
+    vk::CmdDecompressMemoryNV =
+        reinterpret_cast<PFN_vkCmdDecompressMemoryNV>(vk::GetDeviceProcAddr(device(), "vkCmdDecompressMemoryNV"));
+    vk::CmdDecompressMemoryIndirectCountNV = reinterpret_cast<PFN_vkCmdDecompressMemoryIndirectCountNV>(
+        vk::GetDeviceProcAddr(device(), "vkCmdDecompressMemoryIndirectCountNV"));
+
     return true;
 }
 
@@ -209,9 +256,9 @@ bool VkExtensionLayerTest::CheckSynchronization2SupportAndInitState() {
         m_device_extension_names.push_back(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
     }
 
-    auto timeline_features = lvl_init_struct<VkPhysicalDeviceTimelineSemaphoreFeatures>();
-    auto sync2_features = lvl_init_struct<VkPhysicalDeviceSynchronization2FeaturesKHR>(&timeline_features);
-    auto features2 = lvl_init_struct<VkPhysicalDeviceFeatures2KHR>(&sync2_features);
+    auto timeline_features = LvlInitStruct<VkPhysicalDeviceTimelineSemaphoreFeatures>();
+    auto sync2_features = LvlInitStruct<VkPhysicalDeviceSynchronization2FeaturesKHR>(&timeline_features);
+    auto features2 = LvlInitStruct<VkPhysicalDeviceFeatures2KHR>(&sync2_features);
     vk::GetPhysicalDeviceFeatures2(gpu(), &features2);
     if (!sync2_features.synchronization2) {
         return false;
@@ -245,14 +292,11 @@ bool VkExtensionLayerTest::CheckSynchronization2SupportAndInitState() {
         vk::CreateRenderPass2 =
             reinterpret_cast<PFN_vkCreateRenderPass2>(vk::GetDeviceProcAddr(device(), "vkCreateRenderPass2KHR"));
     }
-    vk::CreateSwapchainKHR =
-            reinterpret_cast<PFN_vkCreateSwapchainKHR>(vk::GetDeviceProcAddr(device(), "vkCreateSwapchainKHR"));
+    vk::CreateSwapchainKHR = reinterpret_cast<PFN_vkCreateSwapchainKHR>(vk::GetDeviceProcAddr(device(), "vkCreateSwapchainKHR"));
     vk::GetSwapchainImagesKHR =
-            reinterpret_cast<PFN_vkGetSwapchainImagesKHR>(vk::GetDeviceProcAddr(device(), "vkGetSwapchainImagesKHR"));
-    vk::DestroySwapchainKHR =
-            reinterpret_cast<PFN_vkDestroySwapchainKHR>(vk::GetDeviceProcAddr(device(), "vkDestroySwapchainKHR"));
-    vk::AcquireNextImageKHR=
-            reinterpret_cast<PFN_vkAcquireNextImageKHR>(vk::GetDeviceProcAddr(device(), "vkAcquireNextImageKHR"));
+        reinterpret_cast<PFN_vkGetSwapchainImagesKHR>(vk::GetDeviceProcAddr(device(), "vkGetSwapchainImagesKHR"));
+    vk::DestroySwapchainKHR = reinterpret_cast<PFN_vkDestroySwapchainKHR>(vk::GetDeviceProcAddr(device(), "vkDestroySwapchainKHR"));
+    vk::AcquireNextImageKHR = reinterpret_cast<PFN_vkAcquireNextImageKHR>(vk::GetDeviceProcAddr(device(), "vkAcquireNextImageKHR"));
 
     return true;
 }
@@ -571,6 +615,11 @@ int main(int argc, char **argv) {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
     _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+#endif
+
+#if !defined(ANDROID)
+    // Set VK_LAYER_PATH so that the loader can find the layers
+    SetEnvironment("VK_LAYER_PATH", LAYER_BUILD_LOCATION);
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);

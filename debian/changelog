@@ -1,3 +1,29 @@
+vulkan-extensionlayer (1.3.250.0~rc3-1lunarg22.04-1) jammy; urgency=medium
+
+  [ ziga-lunarg ]
+  * shaderObjects: Update docs for Android support
+  * shaderObject: Fix 32 bit pointers
+  * shaderObject: Mark the shader object layer as beta
+  * shaderObject: Add basic shader object tests
+
+  [ Richard S. Wright Jr ]
+  * shaderObject: Added macos portability extension fixes
+  * shaderObject: MacOS fixes
+  * shaderObject: MacOS VK_KHR_portability_subset fix
+
+  [ ziga-lunarg ]
+  * shaderObject: Disable formatting generated code
+  * shaderObject: Disable GPL on some drivers
+  * shaderObject: Set description pointers to null when count is 0
+
+  [ unknown ]
+  * layers: Use correct JSON type in manifests
+
+  [ ziga-lunarg ]
+  * shaderObject: Add missing extensions
+
+ -- john <john@odin>  Fri, 26 May 2023 13:58:39 -0600
+
 vulkan-extensionlayer (1.3.250.0~rc2-1lunarg22.04-1) jammy; urgency=medium
 
   [ John Zupin ]

@@ -242,6 +242,40 @@ bool VkExtensionLayerTest::CheckDecompressionSupportAndInitState() {
     return true;
 }
 
+bool VkExtensionLayerTest::CheckShaderObjectSupportAndInitState() {
+    if (!DeviceExtensionSupported(VK_EXT_SHADER_OBJECT_EXTENSION_NAME, 0)) {
+        return false;
+    }
+    if (!DeviceExtensionSupported(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME, 0)) {
+        return false;
+    }
+    if (!DeviceExtensionSupported(VK_KHR_MAINTENANCE2_EXTENSION_NAME, 0)) {
+        return false;
+    }
+    m_instance_extension_names.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    m_device_extension_names.push_back(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
+    m_device_extension_names.push_back(VK_KHR_MULTIVIEW_EXTENSION_NAME);
+    m_device_extension_names.push_back(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
+    m_device_extension_names.push_back(VK_KHR_DEPTH_STENCIL_RESOLVE_EXTENSION_NAME);
+    m_device_extension_names.push_back(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+    m_device_extension_names.push_back(VK_EXT_SHADER_OBJECT_EXTENSION_NAME);
+
+    auto shader_object_features = LvlInitStruct<VkPhysicalDeviceShaderObjectFeaturesEXT>();
+    auto dynamic_rendering_features = LvlInitStruct<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(&shader_object_features);
+    auto features2 = LvlInitStruct<VkPhysicalDeviceFeatures2KHR>(&dynamic_rendering_features);
+    vk::GetPhysicalDeviceFeatures2(gpu(), &features2);
+    if (!shader_object_features.shaderObject || !dynamic_rendering_features.dynamicRendering) {
+        return false;
+    }
+    InitState(nullptr, &features2, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    vk::CmdBindShadersEXT = reinterpret_cast<PFN_vkCmdBindShadersEXT>(vk::GetDeviceProcAddr(device(), "vkCmdBindShadersEXT"));
+    vk::CreateShadersEXT = reinterpret_cast<PFN_vkCreateShadersEXT>(vk::GetDeviceProcAddr(device(), "vkCreateShadersEXT"));
+    vk::DestroyShaderEXT = reinterpret_cast<PFN_vkDestroyShaderEXT>(vk::GetDeviceProcAddr(device(), "vkDestroyShaderEXT"));
+    vk::GetShaderBinaryDataEXT = reinterpret_cast<PFN_vkGetShaderBinaryDataEXT>(vk::GetDeviceProcAddr(device(), "vkGetShaderBinaryDataEXT"));
+
+    return true;
+}
+
 bool VkExtensionLayerTest::CheckSynchronization2SupportAndInitState() {
     if (DeviceExtensionSupported(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME, 0)) {
         m_device_extension_names.push_back(VK_KHR_TIMELINE_SEMAPHORE_EXTENSION_NAME);
@@ -381,6 +415,18 @@ bool VkExtensionLayerTest::AddSurfaceInstanceExtension() {
         instance_extensions_.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
         bSupport = true;
     }
+#endif
+
+#if defined(VK_USE_PLATFORM_MACOS_MVK)
+    if (!InstanceExtensionSupported(VK_MVK_MACOS_SURFACE_EXTENSION_NAME)) {
+        printf("%s %s extension not supported\n", kSkipPrefix, VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
+        return false;
+    }
+    if (InstanceExtensionSupported(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME))
+        instance_extensions_.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+
+    instance_extensions_.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
+    bSupport = true;
 #endif
 
     if (bSupport) return true;

@@ -29,25 +29,12 @@ add_custom_command(
     )
 add_custom_target (generate_test_layer_location DEPENDS "${CMAKE_BINARY_DIR}/test_layer_location.h")
 
-# Needed to make structure definitions match with glslang libraries
-add_definitions(-DNV_EXTENSIONS -DAMD_EXTENSIONS)
-
-if(ANNOTATED_SPEC_LINK)
-    add_definitions(-DANNOTATED_SPEC_LINK=${ANNOTATED_SPEC_LINK})
-endif()
-
 if(WIN32)
-    add_definitions(-DVK_USE_PLATFORM_WIN32_KHR -DWIN32_LEAN_AND_MEAN -DNOMINMAX)
-    # Workaround for TR1 deprecation in Visual Studio 15.5 until Google Test is updated
-    add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING)
+    add_definitions(-DWIN32_LEAN_AND_MEAN -DNOMINMAX)
     # If MSVC, allow Windows to use multiprocessor compilation
     if(MSVC)
     add_compile_options(/MP)
     endif()
-elseif(ANDROID)
-    add_definitions(-DVK_USE_PLATFORM_ANDROID_KHR)
-elseif(APPLE)
-    add_definitions(-DVK_USE_PLATFORM_MACOS_MVK)
 endif()
 
 if(WIN32)
@@ -87,6 +74,10 @@ if(MSVC_IDE)
     set_target_properties(vk_extension_layer_tests PROPERTIES VS_DEBUGGER_ENVIRONMENT "VK_LAYER_PATH=$<TARGET_FILE_DIR:VkLayer_khronos_synchronization2>")
 endif()
 
+if (NOT MSVC)
+    target_compile_options(vk_extension_layer_tests PRIVATE "-Wno-sign-compare")
+endif()
+
 add_dependencies(vk_extension_layer_tests VkLayer_khronos_synchronization2 VkLayer_khronos_memory_decompression generate_test_layer_location)
 
 # Note that there is no need to add GTEST directories here due to googletest exporting them via the gtest target.
@@ -94,41 +85,56 @@ target_include_directories(vk_extension_layer_tests
                            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
                                   ${PROJECT_SOURCE_DIR}/utils
                                   ${PROJECT_SOURCE_DIR}/utils/generated
-                                  ${GLSLANG_SPIRV_INCLUDE_DIR}
-                                  ${SPIRV_TOOLS_INCLUDE_DIR}
-                                  ${SPIRV_HEADERS_INCLUDE_DIR}
                                   ${CMAKE_CURRENT_BINARY_DIR}
                                   ${CMAKE_BINARY_DIR}
                                   ${PROJECT_BINARY_DIR}
                                   ${PROJECT_BINARY_DIR}/layers)
 add_dependencies(vk_extension_layer_tests VkExtLayer_utils)
+
+find_package(SPIRV-Headers REQUIRED CONFIG QUIET)
+target_link_libraries(vk_extension_layer_tests PRIVATE SPIRV-Headers::SPIRV-Headers)
+
+find_package(SPIRV-Tools-opt REQUIRED CONFIG QUIET)
+target_link_libraries(vk_extension_layer_tests PRIVATE SPIRV-Tools-opt)
+
+find_package(SPIRV-Tools REQUIRED CONFIG QUIET)
+
+# See https://github.com/KhronosGroup/SPIRV-Tools/issues/3909 for background on this.
+# The targets available from SPIRV-Tools change depending on how SPIRV_TOOLS_BUILD_STATIC is set.
+# Try to handle all possible combinations so that we work with externally built packages.
+if (TARGET SPIRV-Tools)
+    target_link_libraries(vk_extension_layer_tests PRIVATE SPIRV-Tools)
+elseif(TARGET SPIRV-Tools-static)
+    target_link_libraries(vk_extension_layer_tests PRIVATE SPIRV-Tools-static)
+elseif(TARGET SPIRV-Tools-shared)
+    target_link_libraries(vk_extension_layer_tests PRIVATE SPIRV-Tools-shared)
+else()
+    message(FATAL_ERROR "Cannot determine SPIRV-Tools target name")
+endif()
+
+find_package(GTest REQUIRED CONFIG QUIET)
+
+find_package(glslang REQUIRED CONFIG QUIET)
+
 target_link_libraries(vk_extension_layer_tests PRIVATE
     VkExtLayer_utils
     Vulkan::Headers
     GTest::gtest
     GTest::gtest_main
-    ${GLSLANG_LIBRARIES}
+    glslang::glslang
+    glslang::OGLCompiler
+    glslang::OSDependent
+    glslang::MachineIndependent
+    glslang::GenericCodeGen
+    glslang::HLSL
+    glslang::SPIRV
+    glslang::SPVRemapper
+    $<TARGET_NAME_IF_EXISTS:PkgConfig::XCB>
+    $<TARGET_NAME_IF_EXISTS:PkgConfig::X11>
+    $<TARGET_NAME_IF_EXISTS:PkgConfig::WAYlAND_CLIENT>
+    ${CMAKE_DL_LIBS}
 )
 
 target_compile_definitions(vk_extension_layer_tests PUBLIC SHADER_OBJECT_BINARY_PATH="$<TARGET_FILE_DIR:VkLayer_khronos_shader_object>")
 
-# Specify target_link_libraries
-if(NOT WIN32)
-    target_compile_options(vk_extension_layer_tests PRIVATE "-Wno-sign-compare")
-    target_link_libraries(vk_extension_layer_tests PRIVATE ${CMAKE_DL_LIBS} VkExtLayer_utils)
-    if(BUILD_WSI_XCB_SUPPORT)
-        target_link_libraries(vk_extension_layer_tests PRIVATE PkgConfig::XCB)
-    endif()
-
-    if (BUILD_WSI_XLIB_SUPPORT)
-        target_link_libraries(vk_extension_layer_tests PRIVATE PkgConfig::X11)
-    endif()
-
-    if(BUILD_WSI_WAYLAND_SUPPORT)
-        target_link_libraries(vk_extension_layer_tests PRIVATE PkgConfig::WAYLAND)
-    endif()
-endif()
-
-if(INSTALL_TESTS)
-    install(TARGETS vk_extension_layer_tests DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif()
+install(TARGETS vk_extension_layer_tests)

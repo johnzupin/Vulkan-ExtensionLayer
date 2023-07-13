@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2015-2022 The Khronos Group Inc.
- * Copyright (c) 2015-2022 Valve Corporation
- * Copyright (c) 2015-2022 LunarG, Inc.
+ * Copyright (c) 2015-2023 The Khronos Group Inc.
+ * Copyright (c) 2015-2023 Valve Corporation
+ * Copyright (c) 2015-2023 LunarG, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,9 @@
 #include "vktestframework.h"
 #include "vkrenderframework.h"
 
-// For versions prior to VS 2015, suppress the warning
-// caused by the inconsistent redefinition of snprintf
-// between a vulkan header and a glslang header.
-#if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/)
-#pragma warning(push)
-#pragma warning(disable : 4005)
-#endif
-// TODO FIXME remove this once glslang doesn't define this
-#undef BadValue
-#include "SPIRV/GlslangToSpv.h"
-#include "SPIRV/SPVRemapper.h"
-#if (defined(_MSC_VER) && _MSC_VER < 1900 /*vs2015*/)
-#pragma warning(pop)
-#endif
+#include "glslang/SPIRV/GLSL.std.450.h"
+#include "glslang/SPIRV/SPVRemapper.h"
+
 #include <limits.h>
 #include <cmath>
 
@@ -308,6 +297,17 @@ static const char *DefaultConfig =
     "MaxTaskWorkGroupSizeZ_NV 1\n"
     "MaxMeshViewCountNV 4\n"
 
+    "MaxMeshOutputVerticesEXT 256\n"
+    "MaxMeshOutputPrimitivesEXT 512\n"
+    "MaxMeshWorkGroupSizeX_EXT 32\n"
+    "MaxMeshWorkGroupSizeY_EXT 1\n"
+    "MaxMeshWorkGroupSizeZ_EXT 1\n"
+    "MaxTaskWorkGroupSizeX_EXT 32\n"
+    "MaxTaskWorkGroupSizeY_EXT 1\n"
+    "MaxTaskWorkGroupSizeZ_EXT 1\n"
+    "MaxMeshViewCountEXT 4\n"
+    "MaxDualSourceDrawBuffersEXT 1\n"
+
     "nonInductiveForLoops 1\n"
     "whileLoops 1\n"
     "doWhileLoops 1\n"
@@ -549,6 +549,27 @@ void VkTestFramework::ProcessConfigFile(VkPhysicalDeviceLimits const *const devi
             Resources.maxTaskWorkGroupSizeZ_NV = value;
         else if (strcmp(token, "MaxMeshViewCountNV") == 0)
             Resources.maxMeshViewCountNV = value;
+
+        else if (strcmp(token, "MaxMeshOutputVerticesEXT") == 0)
+            Resources.maxMeshOutputVerticesEXT = value;
+        else if (strcmp(token, "MaxMeshOutputPrimitivesEXT") == 0)
+            Resources.maxMeshOutputPrimitivesEXT = value;
+        else if (strcmp(token, "MaxMeshWorkGroupSizeX_EXT") == 0)
+            Resources.maxMeshWorkGroupSizeX_EXT = value;
+        else if (strcmp(token, "MaxMeshWorkGroupSizeY_EXT") == 0)
+            Resources.maxMeshWorkGroupSizeY_EXT = value;
+        else if (strcmp(token, "MaxMeshWorkGroupSizeZ_EXT") == 0)
+            Resources.maxMeshWorkGroupSizeZ_EXT = value;
+        else if (strcmp(token, "MaxTaskWorkGroupSizeX_EXT") == 0)
+            Resources.maxTaskWorkGroupSizeX_EXT = value;
+        else if (strcmp(token, "MaxTaskWorkGroupSizeY_EXT") == 0)
+            Resources.maxTaskWorkGroupSizeY_EXT = value;
+        else if (strcmp(token, "MaxTaskWorkGroupSizeZ_EXT") == 0)
+            Resources.maxTaskWorkGroupSizeZ_EXT = value;
+        else if (strcmp(token, "MaxMeshViewCountEXT") == 0)
+            Resources.maxMeshViewCountEXT = value;
+        else if (strcmp(token, "MaxDualSourceDrawBuffersEXT") == 0)
+            Resources.maxDualSourceDrawBuffersEXT = value;
 
         else if (strcmp(token, "nonInductiveForLoops") == 0)
             Resources.limits.nonInductiveForLoops = (value != 0);

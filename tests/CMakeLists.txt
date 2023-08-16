@@ -14,82 +14,56 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ~~~
+if (NOT ANDROID)
+    # run the generator expression on the test_layer_location file
+    file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/test_layer_location_$<CONFIG>.h" INPUT "${CMAKE_CURRENT_LIST_DIR}/generator_source/test_layer_location.h")
 
-# run the generator expression on the test_layer_location file
-file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/test_layer_location_$<CONFIG>.h" INPUT "${CMAKE_CURRENT_LIST_DIR}/generator_source/test_layer_location.h")
-
-# copy $<BUILD>/test_layer_location_$<CONFIG> to $<BUILD>/test_layer_location.h
-add_custom_command(
-    PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${CMAKE_BINARY_DIR}/test_layer_location_$<CONFIG>.h" "${CMAKE_BINARY_DIR}/test_layer_location.h"
-    VERBATIM
-    DEPENDS  "${CMAKE_BINARY_DIR}/test_layer_location_$<CONFIG>.h"
-    OUTPUT   "${CMAKE_BINARY_DIR}/test_layer_location.h"
-    COMMENT  "creating test_layer_location.h file ({event: PRE_BUILD}, {filename: test_layer_location.h })"
+    # copy $<BUILD>/test_layer_location_$<CONFIG> to $<BUILD>/test_layer_location.h
+    add_custom_command(
+        PRE_BUILD
+        COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${CMAKE_BINARY_DIR}/test_layer_location_$<CONFIG>.h" "${CMAKE_BINARY_DIR}/test_layer_location.h"
+        VERBATIM
+        DEPENDS  "${CMAKE_BINARY_DIR}/test_layer_location_$<CONFIG>.h"
+        OUTPUT   "${CMAKE_BINARY_DIR}/test_layer_location.h"
+        COMMENT  "creating test_layer_location.h file ({event: PRE_BUILD}, {filename: test_layer_location.h })"
     )
-add_custom_target (generate_test_layer_location DEPENDS "${CMAKE_BINARY_DIR}/test_layer_location.h")
-
-if(WIN32)
-    add_definitions(-DWIN32_LEAN_AND_MEAN -DNOMINMAX)
-    # If MSVC, allow Windows to use multiprocessor compilation
-    if(MSVC)
-    add_compile_options(/MP)
-    endif()
+    add_custom_target(generate_test_layer_location DEPENDS "${CMAKE_BINARY_DIR}/test_layer_location.h")
+    include_directories(${CMAKE_BINARY_DIR})
 endif()
 
-if(WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_CRT_SECURE_NO_WARNINGS -D_USE_MATH_DEFINES")
-
-    # If MSVC, disable some signed/unsigned mismatch warnings.
-    if(MSVC)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4267")
-    endif()
+if (ANDROID)
+    add_library(vk_extension_layer_tests MODULE)
+else()
+    add_executable(vk_extension_layer_tests)
 endif()
 
-set(LIBGLM_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/libs)
-
-set(COMMON_CPP
+target_sources(vk_extension_layer_tests PRIVATE
+    extension_layer_tests.cpp
+    synchronization2_tests.cpp
+    decompression_tests.cpp
     vkrenderframework.cpp
     vktestbinding.cpp
     vktestframework.cpp
-    test_environment.cpp)
+    test_environment.cpp
+)
 
-if(NOT TARGET vulkan)
-    set(
-        CMAKE_PREFIX_PATH
-        ${CMAKE_PREFIX_PATH};${VULKAN_HEADERS_INSTALL_DIR};$ENV{VULKAN_HEADERS_INSTALL_DIR}
-        )
+if (NOT ANDROID)
+    target_compile_definitions(vk_extension_layer_tests PRIVATE SHADER_OBJECT_BINARY_PATH="$<TARGET_FILE_DIR:VkLayer_khronos_shader_object>")
+    target_sources(vk_extension_layer_tests PRIVATE shader_object_tests.cpp)
 endif()
 
-set_source_files_properties(${PROJECT_BINARY_DIR}/vk_safe_struct.cpp PROPERTIES GENERATED TRUE)
-add_executable(vk_extension_layer_tests
-               extension_layer_tests.cpp
-               synchronization2_tests.cpp
-               decompression_tests.cpp
-               shader_object_tests.cpp
-               ${COMMON_CPP})
-add_test(NAME vk_extension_layer_tests COMMAND vk_extension_layer_tests)
+set_target_properties(vk_extension_layer_tests PROPERTIES VS_DEBUGGER_ENVIRONMENT "VK_LAYER_PATH=$<TARGET_FILE_DIR:VkLayer_khronos_synchronization2>")
 
-if(MSVC_IDE)
-    set_target_properties(vk_extension_layer_tests PROPERTIES VS_DEBUGGER_ENVIRONMENT "VK_LAYER_PATH=$<TARGET_FILE_DIR:VkLayer_khronos_synchronization2>")
+add_dependencies(vk_extension_layer_tests VkLayer_khronos_synchronization2 VkLayer_khronos_memory_decompression)
+
+if (NOT ANDROID)
+    add_dependencies(vk_extension_layer_tests generate_test_layer_location)
 endif()
 
-if (NOT MSVC)
-    target_compile_options(vk_extension_layer_tests PRIVATE "-Wno-sign-compare")
-endif()
+# TODO: Remove once ndk-build is gone
+target_compile_definitions(vk_extension_layer_tests PRIVATE VVL_TESTS_USE_CMAKE)
 
-add_dependencies(vk_extension_layer_tests VkLayer_khronos_synchronization2 VkLayer_khronos_memory_decompression generate_test_layer_location)
-
-# Note that there is no need to add GTEST directories here due to googletest exporting them via the gtest target.
-target_include_directories(vk_extension_layer_tests
-                           PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-                                  ${PROJECT_SOURCE_DIR}/utils
-                                  ${PROJECT_SOURCE_DIR}/utils/generated
-                                  ${CMAKE_CURRENT_BINARY_DIR}
-                                  ${CMAKE_BINARY_DIR}
-                                  ${PROJECT_BINARY_DIR}
-                                  ${PROJECT_BINARY_DIR}/layers)
-add_dependencies(vk_extension_layer_tests VkExtLayer_utils)
+target_include_directories(vk_extension_layer_tests PRIVATE .)
 
 find_package(SPIRV-Headers REQUIRED CONFIG QUIET)
 target_link_libraries(vk_extension_layer_tests PRIVATE SPIRV-Headers::SPIRV-Headers)
@@ -135,6 +109,12 @@ target_link_libraries(vk_extension_layer_tests PRIVATE
     ${CMAKE_DL_LIBS}
 )
 
-target_compile_definitions(vk_extension_layer_tests PUBLIC SHADER_OBJECT_BINARY_PATH="$<TARGET_FILE_DIR:VkLayer_khronos_shader_object>")
+if (ANDROID)
+    add_subdirectory(android)
+    return()
+endif()
+
+include(GoogleTest)
+gtest_discover_tests(vk_extension_layer_tests DISCOVERY_TIMEOUT 100)
 
 install(TARGETS vk_extension_layer_tests)

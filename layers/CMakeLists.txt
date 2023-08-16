@@ -15,117 +15,95 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ~~~
+add_library(VkLayer_khronos_synchronization2 MODULE)
+target_sources(VkLayer_khronos_synchronization2 PRIVATE
+    synchronization2.cpp
+)
 
-# System-specific macros to create a library target.
-macro(AddVkLayer target LAYER_COMPILE_DEFINITIONS)
-    add_library(VkLayer_${target} MODULE ${ARGN})
-    target_compile_definitions(VkLayer_${target} PUBLIC ${LAYER_COMPILE_DEFINITIONS})
-    target_link_libraries(VkLayer_${target} PRIVATE VkExtLayer_utils Vulkan::Headers)
+add_library(VkLayer_khronos_shader_object MODULE)
+target_sources(VkLayer_khronos_shader_object PRIVATE
+    shader_object.cpp
+)
+
+add_library(VkLayer_khronos_memory_decompression MODULE)
+target_sources(VkLayer_khronos_memory_decompression PRIVATE
+    decompression/decompression.cpp
+)
+
+set(EXTENSION_LAYERS VkLayer_khronos_synchronization2 VkLayer_khronos_shader_object VkLayer_khronos_memory_decompression)
+
+if (NOT WIN32)
+    # timeline_semaphore.c requires a C compiler
+    enable_language(C)
+
+    add_library(VkLayer_khronos_timeline_semaphore MODULE)
+    target_sources(VkLayer_khronos_timeline_semaphore PRIVATE
+        hash_table.cpp
+        timeline_semaphore.c
+    )
+    list(APPEND EXTENSION_LAYERS "VkLayer_khronos_timeline_semaphore")
+endif()
+
+foreach(extension_layer ${EXTENSION_LAYERS})
+    target_include_directories(${extension_layer} PRIVATE .)
+
+    target_link_libraries(${extension_layer} PRIVATE VkExtLayer_utils)
+
     if(MSVC)
-        target_link_options(VkLayer_${target} PRIVATE /DEF:${CMAKE_CURRENT_SOURCE_DIR}/VkLayer_${target}.def)
-        target_compile_definitions(VkLayer_${target} PUBLIC NOMINMAX)
+        target_link_options(${extension_layer} PRIVATE /DEF:${CMAKE_CURRENT_SOURCE_DIR}/${extension_layer}.def)
+        target_compile_definitions(${extension_layer} PUBLIC NOMINMAX)
     elseif(MINGW)
-        target_sources(VkLayer_${target} PRIVATE VkLayer_${target}.def)
+        target_sources(${extension_layer} PRIVATE ${extension_layer}.def)
     elseif(APPLE)
         message(DEBUG "Functions are exported via VEL_EXPORT")
-        set_target_properties(VkLayer_${target} PROPERTIES SUFFIX ".dylib")
+        set_target_properties(${extension_layer} PROPERTIES SUFFIX ".dylib")
     elseif(ANDROID)
         message(DEBUG "Functions are exported via VEL_EXPORT")
     else()
-        target_link_options(VkLayer_${target} PRIVATE LINKER:--version-script=${CMAKE_CURRENT_SOURCE_DIR}/libVkLayer_${target}.map,-Bsymbolic,--exclude-libs,ALL)
+        target_link_options(${extension_layer} PRIVATE LINKER:--version-script=${CMAKE_CURRENT_SOURCE_DIR}/lib${extension_layer}.map,-Bsymbolic,--exclude-libs,ALL)
     endif()
-endmacro()
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}
-                    ${PROJECT_SOURCE_DIR}/utils
-                    ${PROJECT_SOURCE_DIR}/utils/generated)
+    if (ANDROID)
+        install(TARGETS ${extension_layer} DESTINATION ${CMAKE_INSTALL_LIBDIR})
+        continue()
+    endif()
 
-if(MSVC)
-    # Applies to all configurations
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DNOMINMAX)
-    # Avoid: fatal error C1128: number of sections exceeded object file format limit: compile with /bigobj
-    add_compile_options("/bigobj")
-    # Allow Windows to use multiprocessor compilation
-    add_compile_options(/MP)
-    # Turn off transitional "changed behavior" warning message for Visual Studio versions prior to 2015. The changed behavior is
-    # that constructor initializers are now fixed to clear the struct members.
-    add_compile_options("$<$<AND:$<CXX_COMPILER_ID:MSVC>,$<VERSION_LESS:$<CXX_COMPILER_VERSION>,19>>:/wd4351>")
-else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpointer-arith -Wno-unused-function -Wno-sign-compare")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wpointer-arith -Wno-unused-function -Wno-sign-compare")
-endif()
-
-if(NOT WIN32)
-set(TIMELINE_SEMAPHORE_FILES
-    hash_table.cpp
-    timeline_semaphore.c)
-
-AddVkLayer(khronos_timeline_semaphore ""
-    ${TIMELINE_SEMAPHORE_FILES})
-endif()
-
-set(SYNCHRONIZATION2_FILES
-    synchronization2.cpp)
-
-AddVkLayer(khronos_synchronization2 ""
-    ${SYNCHRONIZATION2_FILES})
-
-set(SHADER_OBJECT_FILES
-    shader_object.cpp)
-
-AddVkLayer(khronos_shader_object ""
-    ${SHADER_OBJECT_FILES})
-
-set(DECOMPRESSION_FILES
-    decompression/decompression.cpp)
-
-AddVkLayer(khronos_memory_decompression ""
-    ${DECOMPRESSION_FILES})
-
-set(TARGET_NAMES VkLayer_khronos_timeline_semaphore VkLayer_khronos_synchronization2 VkLayer_khronos_shader_object VkLayer_khronos_memory_decompression)
-
-# timeline_semaphore doesn't build on windows yet
-if (WIN32)
-    list(REMOVE_ITEM TARGET_NAMES "VkLayer_khronos_timeline_semaphore")
-endif()
-
-foreach(TARGET_NAME ${TARGET_NAMES})
-    set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/json/${TARGET_NAME}.json.in")
-    set(INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/intermediate-${TARGET_NAME}.json")
-    set(OUTPUT_FILE_FINAL_NAME "${TARGET_NAME}.json")
+    set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/json/${extension_layer}.json.in")
+    set(INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/intermediate-${extension_layer}.json")
+    set(OUTPUT_FILE_FINAL_NAME "${extension_layer}.json")
     set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR})
     if (WIN32)
         set(LAYER_INSTALL_DIR ${CMAKE_INSTALL_BINDIR}) # WIN32/MINGW expect the dll in the `bin` dir, this matches our WIN32 SDK process
     endif()
 
     if (WIN32)
-        set(JSON_LIBRARY_PATH ".\\\\${TARGET_NAME}.dll")
+        set(JSON_LIBRARY_PATH ".\\\\${extension_layer}.dll")
     elseif(APPLE)
-        set(JSON_LIBRARY_PATH "./lib${TARGET_NAME}.dylib")
+        set(JSON_LIBRARY_PATH "./lib${extension_layer}.dylib")
     else()
-        set(JSON_LIBRARY_PATH "./lib${TARGET_NAME}.so")
+        set(JSON_LIBRARY_PATH "./lib${extension_layer}.so")
     endif()
 
     set(JSON_VERSION ${VulkanHeaders_VERSION})
 
     configure_file(${INPUT_FILE} ${INTERMEDIATE_FILE} @ONLY)
 
-    add_custom_command(TARGET ${TARGET_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${INTERMEDIATE_FILE} $<TARGET_FILE_DIR:${TARGET_NAME}>/${OUTPUT_FILE_FINAL_NAME}
+    add_custom_command(TARGET ${extension_layer} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${INTERMEDIATE_FILE} $<TARGET_FILE_DIR:${extension_layer}>/${OUTPUT_FILE_FINAL_NAME}
     )
 
     # Don't install VkLayer_khronos_memory_decompression. We don't plan to release this for the 1.3.250 SDK release.
-    if (${TARGET_NAME} STREQUAL "VkLayer_khronos_memory_decompression")
+    if (${extension_layer} STREQUAL "VkLayer_khronos_memory_decompression")
         continue()
     endif()
 
     if (UNIX)
-        set(UNIX_INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/unix_install_${TARGET_NAME}.json")
+        set(UNIX_INTERMEDIATE_FILE "${CMAKE_CURRENT_BINARY_DIR}/json/unix_install_${extension_layer}.json")
 
         if(APPLE)
-            set(JSON_LIBRARY_PATH "lib${TARGET_NAME}.dylib")
+            set(JSON_LIBRARY_PATH "lib${extension_layer}.dylib")
         else()
-            set(JSON_LIBRARY_PATH "lib${TARGET_NAME}.so")
+            set(JSON_LIBRARY_PATH "lib${extension_layer}.so")
         endif()
 
         configure_file(${INPUT_FILE} ${UNIX_INTERMEDIATE_FILE} @ONLY)
@@ -137,8 +115,8 @@ foreach(TARGET_NAME ${TARGET_NAMES})
         install(FILES ${INTERMEDIATE_FILE} DESTINATION ${LAYER_INSTALL_DIR} RENAME ${OUTPUT_FILE_FINAL_NAME})
     endif()
     if (MSVC)
-        install(FILES $<TARGET_PDB_FILE:${TARGET_NAME}> DESTINATION ${LAYER_INSTALL_DIR})
+        install(FILES $<TARGET_PDB_FILE:${extension_layer}> DESTINATION ${LAYER_INSTALL_DIR})
     endif()
 
-    install(TARGETS ${TARGET_NAME} DESTINATION ${LAYER_INSTALL_DIR})
+    install(TARGETS ${extension_layer} DESTINATION ${LAYER_INSTALL_DIR})
 endforeach()

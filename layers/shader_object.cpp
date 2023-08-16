@@ -16,6 +16,7 @@
 
 // clang-format off
 
+#include <cassert>
 #include <cctype>
 #include <cstring>
 #include <chrono>
@@ -25,6 +26,9 @@
 #include <shared_mutex>
 #include <functional>
 #include <vector>
+#include <atomic>
+#include <type_traits>
+#include <algorithm>
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_layer.h>
@@ -107,11 +111,98 @@ static bool GetForceEnable() {
     return result;
 }
 
+class AlignedMemory {
+  public:
+    AlignedMemory() : size_(0), max_alignment_(1), memory_write_ptr_(nullptr) {}
+
+    // Reserve memory for T[count] respecting T's alignment
+    template<typename T>
+    constexpr void Add(size_t count = 1) {
+        if (count > 0) {
+            size_ += align(std::alignment_of<T>::value, size_);
+            size_ += sizeof(T) * count;
+
+            if (max_alignment_ < std::alignment_of<T>::value) {
+                max_alignment_ = std::alignment_of<T>::value;
+            }
+        }
+    }
+
+    template<typename T>
+    void SetMemoryWritePtr(T* ptr) {
+        assert(memory_write_ptr_ == nullptr);
+        memory_write_ptr_ = reinterpret_cast<uint8_t*>(ptr);
+    }
+
+    // Allocate memory required for storing all arrays added with Add
+    void Allocate(VkAllocationCallbacks const& allocator, VkSystemAllocationScope scope) {
+        assert(GetSize() > 0);
+        SetMemoryWritePtr(allocator.pfnAllocation(allocator.pUserData, GetSize(), GetAlignment(), scope));
+    }
+
+    // Fetch a pointer to array T[count] that was reserved via Add
+    // The order, types and counts in which GetNextAlignedPtr is called must exactly match those of calls to Add
+    template<typename T>
+    T* GetNextAlignedPtr(size_t count = 1) {
+        T* result = nullptr;
+
+        if (count > 0) {
+            memory_write_ptr_ += align(std::alignment_of<T>::value, reinterpret_cast<size_t>(memory_write_ptr_));
+            result = reinterpret_cast<T*>(memory_write_ptr_);
+            memory_write_ptr_ += sizeof(T) * count;
+        }
+
+        return result;
+    }
+
+    // Fetches a pointer to A[src_size / sizeof(A)] array and copies data from src_ptr to it
+    // src_size must be aligned to sizeof(A)
+    template<typename A, typename T, typename P>
+    void CopyBytes(P*& dst_ptr, T& dst_size, void const* src_ptr, T src_size) {
+        void* data_ptr = static_cast<void*>(GetNextAlignedPtr<A>(src_size / sizeof(A)));
+
+        if (src_size > 0) {
+            memcpy(data_ptr, src_ptr, src_size);
+        }
+
+        dst_size = src_size;
+        dst_ptr = static_cast<P*>(data_ptr);
+    }
+
+    // Fetches a pointer to P[src_count] array and copies data from src_ptr to it
+    template<typename P, typename T>
+    void CopyStruct(P*& dst_ptr, uint32_t& dst_count, T const* src_ptr, uint32_t src_count) {
+        static_assert(std::is_same<const P, const T>::value);
+
+        size_t dst_size;
+        CopyBytes<T>(dst_ptr, dst_size, src_ptr, sizeof(T) * src_count);
+        dst_count = src_count;
+    }
+
+    size_t GetSize() const { return size_ + align(max_alignment_, size_); }
+    size_t GetAlignment() const { return max_alignment_; }
+
+    uint8_t* GetMemoryWritePtr() const { return memory_write_ptr_; }
+
+    explicit operator bool() const { return memory_write_ptr_ != nullptr; }
+
+  private:
+    size_t align(size_t alignment, size_t offset) const {
+        return (alignment - (offset % alignment)) % alignment;
+    }
+
+    size_t size_;
+    size_t max_alignment_;
+    uint8_t* memory_write_ptr_;
+};
+
 static VKAPI_ATTR void* VKAPI_CALL DefaultAlloc(void*, size_t size, size_t alignment, VkSystemAllocationScope) {
     return std::malloc(size);
 }
 
-static VKAPI_ATTR void VKAPI_CALL DefaultFree(void*, void* pMem) { std::free(pMem); }
+static VKAPI_ATTR void VKAPI_CALL DefaultFree(void*, void* pMem) {
+    std::free(pMem);
+}
 
 static VKAPI_ATTR void* VKAPI_CALL DefaultRealloc(void*, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope) {
     return std::realloc(pOriginal, size);
@@ -152,6 +243,7 @@ static uint64_t ChecksumFletcher64(uint32_t const* data, size_t count) {
 template <typename T>
 class ReaderWriterContainer {
   public:
+    ReaderWriterContainer() = default;
     ReaderWriterContainer(T&& data) : data_(std::move(data)) {}
 
     T const& GetDataForReading(std::shared_lock<std::shared_mutex>& lock) {
@@ -161,6 +253,10 @@ class ReaderWriterContainer {
 
     T& GetDataForWriting(std::unique_lock<std::shared_mutex>& lock) {
         lock = std::unique_lock<std::shared_mutex>(mutex_);
+        return data_;
+    }
+
+    T& GetDataUnsafe() {
         return data_;
     }
 
@@ -452,13 +548,42 @@ class HashMap {
         num_entries_ = 0;
     }
 
-    Value& Get(Key const& key) { return *GetOrNullptr(key); }
+    const Value& Get(Key const& key) { return *GetOrNullptr(key); }
 
-    Value* GetOrNullptr(Key const& key) {
+    const Value* GetOrNullptr(Key const& key) const {
         std::unique_lock<std::mutex> lock = UseMutex ? std::unique_lock<std::mutex>(mutex_) : std::unique_lock<std::mutex>{};
 
-        auto found = FindNoLock(key);
-        return found != end() ? &found.GetValue() : nullptr;
+        if (slots_.IsEmpty()) {
+            return nullptr;
+        }
+
+        const size_t hashed_key = hasher_(key);
+        const uint32_t start_index = (uint32_t)(hashed_key % slots_.GetUsed());
+
+        uint32_t index = start_index;
+        for (;;) {
+            const Slot& slot = slots_[index];
+
+            if (slot.state == Slot::State::OCCUPIED && slot.key == key) {
+                // We found the key
+                return &slots_[index].value;
+            }
+
+            if (slot.state == Slot::State::UNOCCUPIED) {
+                // If we came across an unoccupied slot, we've gone past the end of the cluster
+                // i.e. we didn't find the key
+                return nullptr;
+            }
+
+            // If we reach here, we're still in the cluster
+            // i.e. this is a deleted slot or it's an occupied slot with the wrong key
+
+            index = (index + 1) % slots_.GetUsed();
+            if (index == start_index) {
+                // We searched through all the slots and didn't find it
+                return nullptr;
+            }
+        }
     }
 
     Iterator Find(Key const& key) {
@@ -605,7 +730,7 @@ class HashMap {
 
     std::hash<Key> hasher_;
 
-    std::mutex mutex_;
+    mutable std::mutex mutex_;
 };
 
 // These LayerDispatch* structs hold pointers to the next layer's version of these functions so that we can call down the chain
@@ -700,8 +825,24 @@ inline bool operator==(VkViewportSwizzleNV const& a, VkViewportSwizzleNV const& 
 class CommandBufferData;
 static void UpdateDrawState(CommandBufferData& data, VkCommandBuffer commandBuffer);
 
-// All relevant draw state for a single command buffer
 struct Shader;
+
+// Encapsulation of Shader to accurately compare Shaders even if they are out of their lifetimes (they could alias memory location)
+class ComparableShader {
+public:
+    ComparableShader() = default;
+    explicit ComparableShader(Shader* shader);
+
+    bool operator==(ComparableShader const& other) const { return id_ == other.id_; }
+
+    Shader* GetShaderPtr() const { return shader_; }
+
+private:
+    Shader* shader_;
+    uint64_t id_;
+};
+
+// All relevant draw state for a single command buffer
 struct FullDrawStateData {
     struct Limits {
         Limits() {}
@@ -795,7 +936,6 @@ struct FullDrawStateData {
 
 #include "generated/shader_object_full_draw_state_utility_functions.inl"
 
-    // memory must be at least GetSizeInBytes bytes
     static void InitializeMemory(void* memory, VkPhysicalDeviceProperties const& properties) {
         FullDrawStateData* state = new (memory) FullDrawStateData{};
         Limits limits(properties);
@@ -827,24 +967,32 @@ struct FullDrawStateData {
     }
 
     static FullDrawStateData* Create(VkPhysicalDeviceProperties const& properties, VkAllocationCallbacks const& allocator) {
-        size_t bytes_to_allocate = GetSizeInBytes(properties);
-        auto state = static_cast<FullDrawStateData*>(allocator.pfnAllocation(allocator.pUserData, bytes_to_allocate, 0, VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_DEVICE));
-        if (!state) {
+        AlignedMemory aligned_memory;
+        ReserveMemory(aligned_memory, properties);
+        
+        aligned_memory.Allocate(allocator, VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+        if (!aligned_memory) {
             return nullptr;
         }
+        
+        auto state = aligned_memory.GetNextAlignedPtr<FullDrawStateData>();
         InitializeMemory(state, properties);
         state->allocator_ = allocator;
         return state;
     }
 
     static FullDrawStateData* Copy(FullDrawStateData const* o) {
-        size_t bytes_to_allocate = GetSizeInBytes(o->limits_);
+        AlignedMemory aligned_memory;
+        ReserveMemory(aligned_memory, o->limits_);
         auto allocator = kDefaultAllocator;
-        auto state = static_cast<FullDrawStateData*>(allocator.pfnAllocation(allocator.pUserData, bytes_to_allocate, 0, VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_DEVICE));
-        if (!state) {
+
+        aligned_memory.Allocate(allocator, VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+        if (!aligned_memory) {
             return nullptr;
         }
-        memcpy(state, o, bytes_to_allocate);
+        memcpy(aligned_memory.GetMemoryWritePtr(), o, aligned_memory.GetSize());
+
+        auto state = aligned_memory.GetNextAlignedPtr<FullDrawStateData>();
         SetInternalArrayPointers(state, o->limits_);
         state->allocator_ = allocator;
         return state;
@@ -949,6 +1097,8 @@ struct Shader {
     uint64_t GetPrivateData(DeviceData const& device_data, VkPrivateDataSlot slot);
     void     SetPrivateData(DeviceData const& device_data, VkPrivateDataSlot slot, uint64_t data);
 
+    uint64_t id;
+
     const char* name;
     size_t      name_byte_count;
 
@@ -972,7 +1122,7 @@ struct Shader {
     PrivateDataSlotPair*                 reserved_private_data_slots;
 
     // Associates draw states related to this shader with pipelines. Only used for shaders that are always present (i.e. vertex or mesh)
-    HashMap<FullDrawStateData::Key, VkPipeline, false> pipelines;
+    ReaderWriterContainer<HashMap<FullDrawStateData::Key, VkPipeline, false>> pipelines;
 
     // Pipeline cache that is generated at create time (if it's not being created from binary) and is copied into cache
     // This gets serialized into the shader binary
@@ -1050,7 +1200,7 @@ struct DeviceData {
 
 class CommandBufferData {
   public:
-    static size_t             GetSizeInBytes(VkPhysicalDeviceProperties const& properties);
+    static void               ReserveMemory(AlignedMemory& aligned_memory, VkPhysicalDeviceProperties const& properties);
     static CommandBufferData* Create(DeviceData* data, VkAllocationCallbacks allocator);
     static void               Destroy(CommandBufferData** data);
 
@@ -1111,6 +1261,8 @@ static VkResult CreatePipelineLayoutForShader(DeviceData const& deviceData, VkAl
     return deviceData.vtable.CreatePipelineLayout(deviceData.device, &pipeline_layout_create_info, &allocator, &shader->pipeline_layout);
 }
 
+ComparableShader::ComparableShader(Shader *shader) : shader_(shader), id_(shader ? shader->id : 0) {}
+
 void DeviceData::AddDynamicState(VkDynamicState state) {
     ASSERT(dynamic_state_count < kMaxDynamicStates);
     dynamic_states[dynamic_state_count] = state;
@@ -1126,23 +1278,26 @@ bool DeviceData::HasDynamicState(VkDynamicState state) const {
     return false;
 }
 
-size_t CommandBufferData::GetSizeInBytes(VkPhysicalDeviceProperties const& properties) {
-    return sizeof(CommandBufferData) + FullDrawStateData::GetSizeInBytes(properties);
+void CommandBufferData::ReserveMemory(AlignedMemory& aligned_memory, VkPhysicalDeviceProperties const& properties) {
+    aligned_memory.Add<CommandBufferData>();
+    FullDrawStateData::ReserveMemory(aligned_memory, properties);
 }
 
 CommandBufferData* CommandBufferData::Create(DeviceData* data, VkAllocationCallbacks allocator) {
-    size_t bytes_to_allocate = GetSizeInBytes(data->properties);
+    AlignedMemory aligned_memory;
+    ReserveMemory(aligned_memory, data->properties);
 
-    auto cmd_data = static_cast<CommandBufferData*>(allocator.pfnAllocation(
-        allocator.pUserData, bytes_to_allocate, 0, VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_OBJECT));
-    if (!cmd_data) {
+    aligned_memory.Allocate(allocator, VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+    if (!aligned_memory) {
         return nullptr;
     }
 
-    memset(cmd_data, 0, bytes_to_allocate);
+    memset(aligned_memory.GetMemoryWritePtr(), 0, aligned_memory.GetSize());
+
+    auto cmd_data = aligned_memory.GetNextAlignedPtr<CommandBufferData>();
     cmd_data->device_data      = data;
     cmd_data->allocator        = allocator;
-    cmd_data->draw_state_data_ = reinterpret_cast<FullDrawStateData*>(cmd_data + 1);
+    cmd_data->draw_state_data_ = aligned_memory.GetNextAlignedPtr<FullDrawStateData>();
     FullDrawStateData::InitializeMemory(cmd_data->draw_state_data_, data->properties);
     return cmd_data;
 }
@@ -1176,25 +1331,28 @@ VkResult Shader::Create(DeviceData const& deviceData, VkShaderCreateInfoEXT cons
 
     size_t name_size = createInfo.pName == nullptr ? 0 : strlen(createInfo.pName) + 1;
 
-    size_t bytes_to_allocate = sizeof(Shader);
-    bytes_to_allocate += name_size;
-    bytes_to_allocate += spirv_size;
-    bytes_to_allocate += createInfo.pushConstantRangeCount           * sizeof(*createInfo.pPushConstantRanges);
-    bytes_to_allocate += createInfo.setLayoutCount                   * sizeof(*createInfo.pSetLayouts);
-    bytes_to_allocate += deviceData.reserved_private_data_slot_count * sizeof(PrivateDataSlotPair);
+    AlignedMemory aligned_memory;
+    aligned_memory.Add<Shader>();
+    aligned_memory.Add<char>(name_size);
+    aligned_memory.Add<uint32_t>(spirv_size / sizeof(uint32_t));
+    aligned_memory.Add<VkPushConstantRange>(createInfo.pushConstantRangeCount);
+    aligned_memory.Add<VkDescriptorSetLayout>(createInfo.setLayoutCount);
+    aligned_memory.Add<PrivateDataSlotPair>(deviceData.reserved_private_data_slot_count);
     if (createInfo.pSpecializationInfo) {
-        bytes_to_allocate += sizeof(*createInfo.pSpecializationInfo);
-        bytes_to_allocate += createInfo.pSpecializationInfo->dataSize;
-        bytes_to_allocate += createInfo.pSpecializationInfo->mapEntryCount * sizeof(VkSpecializationMapEntry);
+        aligned_memory.Add<uint32_t>(createInfo.pSpecializationInfo->dataSize / sizeof(uint32_t));
+        aligned_memory.Add<VkSpecializationMapEntry>(createInfo.pSpecializationInfo->mapEntryCount);
     }
 
-    void* memory = allocator.pfnAllocation(allocator.pUserData, bytes_to_allocate, 0,
-                                           VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
-    if (!memory) {
+    aligned_memory.Allocate(allocator, VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_OBJECT);
+    if (!aligned_memory) {
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 
-    Shader* shader = new (memory) Shader();
+    Shader* shader = new (aligned_memory.GetNextAlignedPtr<Shader>()) Shader();
+
+    static std::atomic<uint64_t> id_counter{1};
+    shader->id = id_counter.fetch_add(1, std::memory_order_relaxed);
+
     *ppOutShader = shader;
     shader->stage = createInfo.stage;
     if (createInfo.flags & VK_SHADER_CREATE_ALLOW_VARYING_SUBGROUP_SIZE_BIT_EXT) {
@@ -1206,50 +1364,28 @@ VkResult Shader::Create(DeviceData const& deviceData, VkShaderCreateInfoEXT cons
 
     // Copy data over from create info struct
 
-    uint8_t* offset = reinterpret_cast<uint8_t*>(shader) + sizeof(Shader);
+    aligned_memory.CopyBytes<char>(shader->name, shader->name_byte_count, createInfo.pName, name_size);
+    
+    aligned_memory.CopyBytes<uint32_t>(shader->spirv_data, shader->spirv_data_size, spirv_data, spirv_size);
 
-#define COPY_BYTES(dst_ptr, dst_size, src_ptr, src_size) \
-    if (src_size == 0) {                                 \
-        dst_ptr = nullptr;                               \
-    } else {                                             \
-        dst_size = src_size;                             \
-        dst_ptr = (decltype(dst_ptr))offset;             \
-        memcpy((void*)dst_ptr, src_ptr, src_size);       \
-        offset += src_size;                              \
-    }
+    aligned_memory.CopyStruct(shader->push_constant_ranges, shader->num_push_constant_ranges, createInfo.pPushConstantRanges,
+                              createInfo.pushConstantRangeCount);
 
-#define COPY_STRUCT(dst_ptr, dst_count, src_ptr, src_count)                \
-    COPY_BYTES(dst_ptr, dst_count, src_ptr, sizeof(*src_ptr) * src_count); \
-    dst_count = src_count
+    aligned_memory.CopyStruct(shader->descriptor_set_layouts, shader->num_descriptor_set_layouts, createInfo.pSetLayouts,
+                              createInfo.setLayoutCount);
 
-    if (createInfo.pName != nullptr) {
-        COPY_BYTES(shader->name, shader->name_byte_count, createInfo.pName, name_size);
-    }
-
-    COPY_BYTES(shader->spirv_data, shader->spirv_data_size, spirv_data, spirv_size);
-
-    COPY_STRUCT(shader->push_constant_ranges, shader->num_push_constant_ranges, createInfo.pPushConstantRanges,
-                createInfo.pushConstantRangeCount);
-
-    COPY_STRUCT(shader->descriptor_set_layouts, shader->num_descriptor_set_layouts, createInfo.pSetLayouts,
-                createInfo.setLayoutCount);
+    shader->reserved_private_data_slots = aligned_memory.GetNextAlignedPtr<PrivateDataSlotPair>(deviceData.reserved_private_data_slot_count);
 
     if (createInfo.pSpecializationInfo) {
         shader->specialization_info = *createInfo.pSpecializationInfo;
         shader->specialization_info_ptr = &shader->specialization_info;
 
-        COPY_BYTES(shader->specialization_info.pData, shader->specialization_info.dataSize, createInfo.pSpecializationInfo->pData,
-                   createInfo.pSpecializationInfo->dataSize);
+        aligned_memory.CopyBytes<uint32_t>(shader->specialization_info.pData, shader->specialization_info.dataSize,
+                                 createInfo.pSpecializationInfo->pData, createInfo.pSpecializationInfo->dataSize);
 
-        COPY_STRUCT(shader->specialization_info.pMapEntries, shader->specialization_info.mapEntryCount,
-                    createInfo.pSpecializationInfo->pMapEntries, createInfo.pSpecializationInfo->mapEntryCount);
+        aligned_memory.CopyStruct(shader->specialization_info.pMapEntries, shader->specialization_info.mapEntryCount,
+                                  createInfo.pSpecializationInfo->pMapEntries, createInfo.pSpecializationInfo->mapEntryCount);
     }
-
-    shader->reserved_private_data_slots = (PrivateDataSlotPair*)offset;
-    offset += sizeof(PrivateDataSlotPair) * deviceData.reserved_private_data_slot_count;
-
-#undef COPY_BYTES
-#undef COPY_STRUCT
 
     // Create shader module from SPIR-V
 
@@ -1350,10 +1486,12 @@ void Shader::Destroy(DeviceData const& device_data, Shader* pShader, VkAllocatio
             FullDrawStateData::Destroy(pShader->partial_pipeline.draw_state);
         }
     }
-    for (auto const& pair : pShader->pipelines) {
+
+    auto& pipelines = pShader->pipelines.GetDataUnsafe();
+    for (auto const& pair : pipelines) {
         vtable.DestroyPipeline(device, pair.value, nullptr);
     }
-    pShader->pipelines.Clear();
+    pipelines.Clear();
     pShader->private_data.Clear();
     pShader->~Shader();
 
@@ -1369,7 +1507,7 @@ uint64_t Shader::GetPrivateData(DeviceData const& device_data, VkPrivateDataSlot
     }
 
     // then, look up in the map
-    uint64_t* found = private_data.GetOrNullptr(slot);
+    const uint64_t* found = private_data.GetOrNullptr(slot);
     if (found) {
         return *found;
     }
@@ -1555,7 +1693,7 @@ static VkPipeline CreateGraphicsPipelineForCommandBufferState(CommandBufferData&
     VkShaderStageFlags present_stages = 0;
 
     for (uint32_t shader_type = 0; shader_type < NUM_SHADERS; ++shader_type) {
-        Shader* shader = state->GetShader(shader_type);
+        Shader* shader = state->GetComparableShader(shader_type).GetShaderPtr();
 
         if (shader == nullptr) {
             continue;
@@ -1858,7 +1996,7 @@ static VkPipeline CreateGraphicsPipelineForCommandBufferState(CommandBufferData&
 
         // Search through available precompiled pipelines
         for (uint32_t shader_type = 0; shader_type < NUM_SHADERS; ++shader_type) {
-            Shader* shader = state->GetShader(shader_type);
+            Shader* shader = state->GetComparableShader(shader_type).GetShaderPtr();
             if (shader == nullptr) {
                 continue;
             }
@@ -1942,7 +2080,7 @@ void AddGraphicsPipelineToCache(DeviceData const& deviceData, VkAllocationCallba
         nullptr,
         0,
         (options & PipelineCreationFlagBits::INCLUDE_COLOR) ? 1u : 0u,
-        &color_format,
+        (options & PipelineCreationFlagBits::INCLUDE_COLOR) ? &color_format : nullptr,
         depth_stencil_format,
         depth_stencil_format,
     };
@@ -2042,7 +2180,7 @@ void AddGraphicsPipelineToCache(DeviceData const& deviceData, VkAllocationCallba
     };
     VkGraphicsPipelineCreateInfo create_info{
         VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-        nullptr,
+        &rendering_info,
         0u,
         stageCount,
         stages,
@@ -2194,7 +2332,7 @@ PartialPipeline CreatePartiallyCompiledPipeline(DeviceData const& deviceData, Vk
         stages
     };
     for (uint32_t i = 0; i < shaderCount; ++i) {
-        partial_pipeline.draw_state->SetShader(ShaderStageToShaderType(ppShaders[i]->stage), ppShaders[i]);
+        partial_pipeline.draw_state->SetComparableShader(ShaderStageToShaderType(ppShaders[i]->stage), ComparableShader(ppShaders[i]));
     }
     if (gpl_create_info.flags & VK_GRAPHICS_PIPELINE_LIBRARY_PRE_RASTERIZATION_SHADERS_BIT_EXT) {
         create_info.pViewportState = &viewport_state;
@@ -2336,6 +2474,7 @@ static VkResult PopulateCachesForShaders(DeviceData const& deviceData, VkAllocat
 
         // Gather shaders into stages for pipeline compilation
         VkPipelineShaderStageCreateInfo stages[NUM_SHADERS];
+        uint32_t graphics_shader_count = 0;
         for (uint32_t i = 0; i < shaderCount; ++i) {
             auto shader = *reinterpret_cast<Shader**>(&pShaders[i]);
             switch (shader->stage) {
@@ -2352,11 +2491,13 @@ static VkResult PopulateCachesForShaders(DeviceData const& deviceData, VkAllocat
                 case VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT:
                     has_tese = true;
                     break;
+                case VK_SHADER_STAGE_COMPUTE_BIT:
+                    continue;
                 default:
                     break;
             }
 
-            stages[i] = {
+            stages[graphics_shader_count++] = {
                 VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
                 nullptr,
                 shader->flags,
@@ -2373,14 +2514,14 @@ static VkResult PopulateCachesForShaders(DeviceData const& deviceData, VkAllocat
         }
 
         AddGraphicsPipelineToCache(deviceData, allocator,
-            vertex_or_mesh_shader->cache, vertex_or_mesh_shader->pipeline_layout, shaderCount, stages,
+            vertex_or_mesh_shader->cache, vertex_or_mesh_shader->pipeline_layout, graphics_shader_count, stages,
             PipelineCreationFlagBits::INCLUDE_DEPTH);
         if (has_fragment_shader) {
             AddGraphicsPipelineToCache(deviceData, allocator,
-                vertex_or_mesh_shader->cache, vertex_or_mesh_shader->pipeline_layout, shaderCount, stages,
+                vertex_or_mesh_shader->cache, vertex_or_mesh_shader->pipeline_layout, graphics_shader_count, stages,
                 PipelineCreationFlagBits::INCLUDE_COLOR);
             AddGraphicsPipelineToCache(deviceData, allocator,
-                vertex_or_mesh_shader->cache, vertex_or_mesh_shader->pipeline_layout, shaderCount, stages,
+                vertex_or_mesh_shader->cache, vertex_or_mesh_shader->pipeline_layout, graphics_shader_count, stages,
                 PipelineCreationFlagBits::INCLUDE_DEPTH | PipelineCreationFlagBits::INCLUDE_COLOR);
         }
     }
@@ -2427,18 +2568,38 @@ static void UpdateDrawState(CommandBufferData& data, VkCommandBuffer commandBuff
         return;
     }
 
-    auto vertex_or_mesh_shader = state_data->GetShader(VERTEX_SHADER);
+    auto vertex_or_mesh_shader = state_data->GetComparableShader(VERTEX_SHADER).GetShaderPtr();
     if (vertex_or_mesh_shader == nullptr) {
-        vertex_or_mesh_shader = state_data->GetShader(MESH_SHADER);
+        vertex_or_mesh_shader = state_data->GetComparableShader(MESH_SHADER).GetShaderPtr();
     }
     ASSERT(vertex_or_mesh_shader != nullptr);
 
     auto state_data_key     = state_data->GetKey();
-    auto found_pipeline_ptr = vertex_or_mesh_shader->pipelines.GetOrNullptr(state_data_key);
-    VkPipeline pipeline     = found_pipeline_ptr ? *found_pipeline_ptr : VK_NULL_HANDLE;
+    VkPipeline pipeline     = VK_NULL_HANDLE;
+    uint32_t pipeline_count = 0;
+    {
+        std::shared_lock<std::shared_mutex> lock;
+        auto const& pipelines   = vertex_or_mesh_shader->pipelines.GetDataForReading(lock);
+        auto found_pipeline_ptr = pipelines.GetOrNullptr(state_data_key);
+        if (found_pipeline_ptr) {
+            pipeline = *found_pipeline_ptr;
+        }
+        pipeline_count = pipelines.NumEntries();
+    }
     if (pipeline == VK_NULL_HANDLE) {
-        pipeline = CreateGraphicsPipelineForCommandBufferState(data);
-        vertex_or_mesh_shader->pipelines.Add(state_data_key, pipeline);
+        std::unique_lock<std::shared_mutex> lock;
+        auto& pipelines = vertex_or_mesh_shader->pipelines.GetDataForWriting(lock);
+        // Ensure that a pipeline for this state wasn't created in another thread between the read lock above and the write lock
+        if (pipelines.NumEntries() > pipeline_count) {
+            auto iter = pipelines.Find(state_data_key);
+            if (iter != pipelines.end()) {
+                pipeline = iter.GetValue();
+            }
+        }
+        if (pipeline == VK_NULL_HANDLE) {
+            pipeline = CreateGraphicsPipelineForCommandBufferState(data);
+            pipelines.Add(state_data_key, pipeline);
+        }
     }
 
     data.device_data->vtable.CmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
@@ -2652,7 +2813,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysi
         *pPropertyCount = 0;
         return result;
     }
-    auto all_properties = static_cast<VkExtensionProperties*>(kDefaultAllocator.pfnAllocation(nullptr, count * sizeof(VkExtensionProperties), 0, VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_COMMAND));
+    auto all_properties = static_cast<VkExtensionProperties*>(kDefaultAllocator.pfnAllocation(nullptr, count * sizeof(VkExtensionProperties), std::alignment_of<VkExtensionProperties>::value, VkSystemAllocationScope::VK_SYSTEM_ALLOCATION_SCOPE_COMMAND));
     if (!all_properties) {
         *pPropertyCount = 0;
         return VK_ERROR_OUT_OF_HOST_MEMORY;
@@ -2772,7 +2933,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateDevice(VkPhysicalDevice physicalDevi
         }
     }
 
-    void* device_data_memory = allocator.pfnAllocation(allocator.pUserData, sizeof(DeviceData), 0, VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
+    void* device_data_memory = allocator.pfnAllocation(allocator.pUserData, sizeof(DeviceData), std::alignment_of<DeviceData>::value, VK_SYSTEM_ALLOCATION_SCOPE_DEVICE);
     if (!device_data_memory) {
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     }
@@ -3107,12 +3268,23 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateShadersEXT(VkDevice device, uint32_t
         auto shader = reinterpret_cast<Shader**>(&pShaders[i]);
         result = Shader::Create(device_data, pCreateInfos[i], allocator, shader);
         if (result != VK_SUCCESS) {
+            *shader = nullptr;
             successfulCreateCount = i;
             break;
         }
         if ((pCreateInfos[i].stage & VK_SHADER_STAGE_ALL_GRAPHICS) != 0 && (pCreateInfos[i].flags & VK_SHADER_CREATE_LINK_STAGE_BIT_EXT) != 0) {
             are_graphics_shaders_linked = true;
         }
+    }
+
+    if (result != VK_SUCCESS && are_graphics_shaders_linked) {
+        return result;
+    }
+
+    bool incompatible_binary = false;
+    if (result == VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT) {
+        incompatible_binary = true;
+        result = VK_SUCCESS;
     }
 
     // More work may be able to be done up-front depending on create options and feature support. There isn't enough information
@@ -3124,7 +3296,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateShadersEXT(VkDevice device, uint32_t
     // Create pipeline layout for pipeline creation
     Shader* vertex_or_mesh_shader = nullptr;
     Shader* fragment_shader = nullptr;
-    if (result == VK_SUCCESS || result == VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT) {
+    if (result == VK_SUCCESS) {
         for (uint32_t i = 0; i < successfulCreateCount; ++i) {
             auto shader = *reinterpret_cast<Shader**>(&pShaders[i]);
             switch (shader->stage) {
@@ -3140,11 +3312,11 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateShadersEXT(VkDevice device, uint32_t
             }
         }
     }
-    if ((result == VK_SUCCESS || result == VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT) && are_graphics_shaders_linked && (vertex_or_mesh_shader || fragment_shader)) {
+    if (result == VK_SUCCESS && are_graphics_shaders_linked && (vertex_or_mesh_shader || fragment_shader)) {
         Shader* shader_to_read_layout_from = vertex_or_mesh_shader ? vertex_or_mesh_shader : fragment_shader;
         result = CreatePipelineLayoutForShader(device_data, allocator, shader_to_read_layout_from);
     }
-    if ((result == VK_SUCCESS || result == VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT) && !are_graphics_shaders_linked && device_data.graphics_pipeline_library.graphicsPipelineLibrary == VK_TRUE) {
+    if (result == VK_SUCCESS && !are_graphics_shaders_linked && device_data.graphics_pipeline_library.graphicsPipelineLibrary == VK_TRUE) {
         // Create layout for unlinked shaders that can have partial pipelines created
         for (uint32_t i = 0; i < successfulCreateCount; ++i) {
             auto shader = *reinterpret_cast<Shader**>(&pShaders[i]);
@@ -3166,7 +3338,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateShadersEXT(VkDevice device, uint32_t
 
     // Generating pipelines to fill the cache is only relevant if codeType is not binary (i.e. SPIR-V) since the caches are
     // serialized in the shader binary
-    if ((result == VK_SUCCESS || result == VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT) && pCreateInfos[0].codeType != VK_SHADER_CODE_TYPE_BINARY_EXT) {
+    if (result == VK_SUCCESS && pCreateInfos[0].codeType != VK_SHADER_CODE_TYPE_BINARY_EXT) {
         result = PopulateCachesForShaders(device_data, allocator, are_graphics_shaders_linked, successfulCreateCount, pShaders);
 
         for (uint32_t i = 0; i < successfulCreateCount; ++i) {
@@ -3184,13 +3356,9 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateShadersEXT(VkDevice device, uint32_t
         }
     }
 
-    if ((result != VK_SUCCESS && result != VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT)) {
-        for (uint32_t i = 0; i < successfulCreateCount; ++i) {
-            auto shader = *reinterpret_cast<Shader**>(&pShaders[i]);
-            Shader::Destroy(device_data, shader, allocator);
-        }
+    if (incompatible_binary) {
+        return VK_ERROR_INCOMPATIBLE_SHADER_BINARY_EXT;
     }
-
 
     return result;
 }
@@ -3236,7 +3404,7 @@ static VKAPI_ATTR void VKAPI_CALL CmdBindShadersEXT(VkCommandBuffer commandBuffe
         if (shader) {
             cmd_data->graphics_bind_point_belongs_to_layer = true;
         }
-        cmd_data->GetDrawStateData()->SetShader(ShaderStageToShaderType(pStages[i]), shader);
+        cmd_data->GetDrawStateData()->SetComparableShader(ShaderStageToShaderType(pStages[i]), ComparableShader(shader));
     }
 }
 

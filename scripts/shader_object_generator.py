@@ -380,7 +380,7 @@ def generate_full_draw_state_struct_members(data):
         out_file.write(f'        if (flag == {subset_flag}) {{\n')
 
         for shader in data['pipeline_subsets'][subset_flag]['shaders']:
-            out_file.write(f'            if (o.shaders_[{shader}] != shaders_[{shader}]) {{\n')
+            out_file.write(f'            if (!(o.comparable_shaders_[{shader}] == comparable_shaders_[{shader}])) {{\n')
             out_file.write(f'                return false;\n')
             out_file.write(f'            }}\n')
 
@@ -460,30 +460,29 @@ def generate_full_draw_state_utility_functions(data):
 
     # generate GetSizeInBytes
 
-    out_file.write('    static size_t GetSizeInBytes(Limits const& limits) {\n')
-    out_file.write('        return\n')
+    out_file.write('    static constexpr void ReserveMemory(AlignedMemory& aligned_memory, Limits const& limits) {\n')
+    out_file.write('        aligned_memory.Add<FullDrawStateData>();\n')
 
     for var_data in init_time_array_variables:
         var_type = var_data['type']
         length = var_data['init_time_array_length']
-        out_file.write(f'            sizeof({var_type}) * limits.{length} +\n')
+        out_file.write(f'        aligned_memory.Add<{var_type}>(limits.{length});\n')
 
-    out_file.write('            sizeof(FullDrawStateData);\n')
     out_file.write('    }\n\n')
 
     # generate SetInternalArrayPointers
 
     out_file.write('    static void SetInternalArrayPointers(FullDrawStateData* state, Limits const& limits) {\n')
     out_file.write('        // Set array pointers to beginning of their memory\n')
-    out_file.write('        char* offset_ptr = (char*)state + sizeof(FullDrawStateData);\n')
+    out_file.write('        AlignedMemory aligned_memory;\n')
+    out_file.write('        aligned_memory.SetMemoryWritePtr((char*)state + sizeof(FullDrawStateData));\n')
 
     for var_data in init_time_array_variables:
         var_name_private = get_private_variable_name(var_data)
         var_type = var_data['type']
         length = var_data['init_time_array_length']
 
-        out_file.write(f'\n        state->{var_name_private} = ({var_type}*)offset_ptr;\n')
-        out_file.write(f'        offset_ptr += sizeof({var_type}) * limits.{length};\n')
+        out_file.write(f'        state->{var_name_private} = aligned_memory.GetNextAlignedPtr<{var_type}>(limits.{length});\n')
 
     out_file.write('    }\n')
 

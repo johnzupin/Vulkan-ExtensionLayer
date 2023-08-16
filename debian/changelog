@@ -1,3 +1,129 @@
+vulkan-extensionlayer (1.3.261.0~rc1-1lunarg20.04-1) focal; urgency=medium
+
+  [ ziga-lunarg ]
+  * shaderObject: Fix 32 bit pointers
+  * shaderObjects: Update docs for Android support
+  * shaderObject: Mark the shader object layer as beta
+  * shaderObject: Add basic shader object tests
+
+  [ Richard S. Wright Jr ]
+  * shaderObject: Added macos portability extension fixes
+  * shaderObject: MacOS fixes
+  * shaderObject: MacOS VK_KHR_portability_subset fix
+
+  [ ziga-lunarg ]
+  * shaderObject: Disable formatting generated code
+  * shaderObject: Disable GPL on some drivers
+  * shaderObject: Set description pointers to null when count is 0
+
+  [ unknown ]
+  * layers: Use correct JSON type in manifests
+
+  [ ziga-lunarg ]
+  * shaderObject: Add missing extensions
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.251
+  * build: Update Vulkan-Headers to 1.3.252
+  * build: Update Vulkan-Headers to 1.3.253
+  * build: Update Vulkan-Headers to 1.3.254
+
+  [ Ziga ]
+  * tests: Temporarily remove shader test
+
+  [ unknown ]
+  * layers: Fix EnumPhysDevs in decompression
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.255
+
+  [ Juan Ramos ]
+  * cmake: Various QoL CMake fixes ported from VVL
+  * cmake: Remove BUILD_LAYERS & BUILD_LAYER_SUPPORT_FILES
+  * ci: Cleanup CI scripts
+
+  [ Richard S. Wright Jr ]
+  * tests: Updated tests for macos
+
+  [ Juan Ramos ]
+  * cmake: Fix vulkan platform defines
+  * cmake: Fix visibility code
+  * cmake: Remove old workaround for VS 2015
+  * cmake: Remove ANNOTATED_SPEC_LINK
+  * cmake: Remove NV_EXTENSIONS AMD_EXTENSIONS
+  * cmake: Organize CMake in same order as VVL
+  * cmake: Change project name to VEL
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.256
+
+  [ ziga-lunarg ]
+  * tests: Re-add shader object test
+  * tests: Fix sync2 swapchain image test
+  * tests: Add missing spirv limits
+  * shaderObject: Add more tests
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.257
+
+  [ ziga-lunarg ]
+  * shaderObject: Add missing rendering info
+  * tests: Fix mesh shader test
+  * shaderObject: Fix creating shaders with incompatible binary
+  * tests: Add test with incompatible binary
+  * shaderObject: Skip compute shaders when creating cache
+
+  [ John Zupin ]
+  * packaging: debian: update to add pkgconfig as a build dep
+
+  [ Juan Ramos ]
+  * cmake: Cleanup compiler/language usage
+  * docs: Update BUILD.md
+  * cmake: Remove AddVkLayer
+  * cmake: Cleanup tests/CMakeLists.txt
+  * ci: Use Ninja across all builds
+
+  [ ziga-lunarg ]
+  * shaderObject: Fix pipelines race condition
+  * shaderObject: Remove beta status
+
+  [ Juan Ramos ]
+  * cmake: Port VVL Android CMake fixes
+  * ci: Remove ndk-build from github actions CI
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.258
+  * build: Update Vulkan-Headers to 1.3.259
+  * build: Update SPIRV-Headers, -Tools, and googletest
+
+  [ Juan Ramos ]
+  * ci: Minimize ubuntu-20.04 /clang testing on linux
+  * build: Update glslang
+
+  [ ziga-lunarg ]
+  * shaderObject: Fix binding pipeline if created in another thread
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.260
+
+  [ qbojj ]
+  * shaderObject: Fix potential use of wrong pipeline
+
+  [ ziga-lunarg ]
+  * shaderObject: Fix memory allocation alignment
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.261
+  * build: Update SPIRV-Tools, SPIRV-Headers and glslang
+
+  [ qbojj ]
+  * shaderObject: Fix alignment fix
+
+  [ ziga-lunarg ]
+  * tests: Fix task mesh shader draw test
+
+ -- john <john@odin>  Wed, 16 Aug 2023 11:59:41 -0600
+
 vulkan-extensionlayer (1.3.250.0~rc3-1lunarg20.04-1) focal; urgency=medium
 
   [ ziga-lunarg ]

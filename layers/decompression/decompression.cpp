@@ -21,10 +21,8 @@ static bool logging_enabled = false;
 
 #define PRINT(...)                        \
     {                                     \
-        if (logging_enabled) {            \
             fprintf(stdout, __VA_ARGS__); \
             fflush(stdout);               \
-        }                                 \
     }
 
 #include <vulkan/vk_layer.h>

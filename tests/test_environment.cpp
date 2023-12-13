@@ -25,8 +25,9 @@
  */
 
 #include "test_common.h"
-#include "lvt_function_pointers.h"
 #include "test_environment.h"
+
+#include <volk.h>
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
 
@@ -85,7 +86,7 @@ void Environment::SetUp() {
 #ifdef VK_USE_PLATFORM_XCB_KHR
     instance_extension_names.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
 #endif
-#ifdef VK_USE_PLATFORM_MACOS_MVK
+#ifdef __APPLE__
     device_extension_names.push_back("VK_VK_KHR_portability_subset");
     instance_extension_names.push_back("VK_KHR_portability_enumeration");
 #endif
@@ -108,7 +109,7 @@ void Environment::SetUp() {
     inst_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     inst_info.pNext = NULL;
     inst_info.pApplicationInfo = &app_;
-#ifdef VK_USE_PLATFORM_MACOS_MVK
+#ifdef __APPLE__
     inst_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
     inst_info.enabledExtensionCount = instance_extension_names.size();
@@ -118,12 +119,15 @@ void Environment::SetUp() {
 
     VkResult err;
     uint32_t count;
-    err = vk::CreateInstance(&inst_info, NULL, &inst);
+    err = vkCreateInstance(&inst_info, NULL, &inst);
     ASSERT_EQ(VK_SUCCESS, err);
-    err = vk::EnumeratePhysicalDevices(inst, &count, NULL);
+
+    volkLoadInstance(inst);
+
+    err = vkEnumeratePhysicalDevices(inst, &count, NULL);
     ASSERT_EQ(VK_SUCCESS, err);
     ASSERT_LE(count, ARRAY_SIZE(gpus));
-    err = vk::EnumeratePhysicalDevices(inst, &count, gpus);
+    err = vkEnumeratePhysicalDevices(inst, &count, gpus);
     ASSERT_EQ(VK_SUCCESS, err);
     ASSERT_GT(count, default_dev_);
 
@@ -156,6 +160,6 @@ void Environment::TearDown() {
     for (std::vector<Device *>::iterator it = devs_.begin(); it != devs_.end(); it++) delete *it;
     devs_.clear();
 
-    if (inst) vk::DestroyInstance(inst, NULL);
+    if (inst) vkDestroyInstance(inst, NULL);
 }
 }  // namespace vk_testing

@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2015-2016, 2020-2022 The Khronos Group Inc.
- * Copyright (c) 2015-2016, 2020-2022 Valve Corporation
- * Copyright (c) 2015-2016, 2020-2022 LunarG, Inc.
+ * Copyright (c) 2015-2016, 2020-2023 The Khronos Group Inc.
+ * Copyright (c) 2015-2016, 2020-2023 Valve Corporation
+ * Copyright (c) 2015-2016, 2020-2023 LunarG, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,7 @@
  * Author: John Zulauf <jzulauf@lunarg.com>
  */
 
-#ifndef VKTESTBINDING_H
-#define VKTESTBINDING_H
+#pragma once
 
 #include <algorithm>
 #include <cassert>
@@ -29,7 +28,7 @@
 #include <memory>
 #include <vector>
 
-#include "lvt_function_pointers.h"
+#include "volk.h"
 #include "test_common.h"
 
 namespace vk_testing {
@@ -51,7 +50,6 @@ std::vector<Dst> MakeVkHandles(const std::vector<Src *> &v) {
 }
 
 typedef void (*ErrorCallback)(const char *expr, const char *file, unsigned int line, const char *function);
-void set_error_callback(ErrorCallback callback);
 
 class PhysicalDevice;
 class Device;
@@ -207,9 +205,6 @@ class Device : public internal::Handle<VkDevice> {
     std::vector<const char *> GetEnabledExtensions() { return enabled_extensions_; }
     bool IsEnabledExtension(const char *extension);
 
-    // vkGetDeviceProcAddr()
-    PFN_vkVoidFunction get_proc(const char *name) const { return vk::GetDeviceProcAddr(handle(), name); }
-
     // vkGetDeviceQueue()
     const std::vector<Queue *> &graphics_queues() const { return queues_[GRAPHICS]; }
     const std::vector<Queue *> &compute_queues() { return queues_[COMPUTE]; }
@@ -329,7 +324,7 @@ class Fence : public internal::NonDispHandle<VkFence> {
     void init(const Device &dev, const VkFenceCreateInfo &info);
 
     // vkGetFenceStatus()
-    VkResult status() const { return vk::GetFenceStatus(device(), handle()); }
+    VkResult status() const { return vkGetFenceStatus(device(), handle()); }
     VkResult wait(uint64_t timeout) const;
 
     static VkFenceCreateInfo create_info(VkFenceCreateFlags flags);
@@ -356,7 +351,7 @@ class Event : public internal::NonDispHandle<VkEvent> {
     // vkGetEventStatus()
     // vkSetEvent()
     // vkResetEvent()
-    VkResult status() const { return vk::GetEventStatus(device(), handle()); }
+    VkResult status() const { return vkGetEventStatus(device(), handle()); }
     void set();
     void reset();
 
@@ -1048,5 +1043,3 @@ inline VkCommandBufferAllocateInfo CommandBuffer::create_info(VkCommandPool cons
 }
 
 }  // namespace vk_testing
-
-#endif  // VKTESTBINDING_H

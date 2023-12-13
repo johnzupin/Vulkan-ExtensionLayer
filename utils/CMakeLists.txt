@@ -19,11 +19,10 @@ add_library(VkExtLayer_utils STATIC)
 
 target_sources(VkExtLayer_utils PRIVATE
     allocator.cpp
-    vk_format_utils.cpp
-    vk_layer_config.cpp
     generated/vk_safe_struct.cpp
-    generated/lvt_function_pointers.cpp
 )
+
+lunarg_target_compiler_configurations(VkExtLayer_utils ${BUILD_WERROR})
 
 # TODO: Fix warnings
 target_compile_options(VkExtLayer_utils PUBLIC "$<IF:$<CXX_COMPILER_ID:MSVC>,/wd4100,-Wno-unused-parameter>")
@@ -38,7 +37,6 @@ if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
         -Wno-implicit-fallthrough
         -Wno-implicit-int-float-conversion
         -Wno-shorten-64-to-32
-        -Wno-incompatible-function-pointer-types
     )
 endif()
 if (MSVC)
@@ -54,7 +52,7 @@ if (MSVC)
     )
 endif()
 
-target_link_libraries(VkExtLayer_utils PUBLIC Vulkan::Headers)
+target_link_libraries(VkExtLayer_utils PUBLIC Vulkan::Headers Vulkan::UtilityHeaders)
 
 if(ANDROID)
     target_link_libraries(VkExtLayer_utils PUBLIC log)

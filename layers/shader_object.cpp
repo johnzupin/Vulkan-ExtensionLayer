@@ -32,11 +32,14 @@
 
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_layer.h>
+#include <vulkan/layer/vk_layer_settings.hpp>
 
 #include "log.h"
 #include "vk_safe_struct.h"
 #include "vk_api_hash.h"
-#include "vk_layer_config.h"
+
+#define kLayerSettingsForceEnable "force_enable"
+#define kLayerSettingsCustomSTypeInfo "custom_stype_list"
 
 // Required by vk_safe_struct
 std::vector<std::pair<uint32_t, uint32_t>> custom_stype_info{};
@@ -77,39 +80,8 @@ std::vector<std::pair<uint32_t, uint32_t>> custom_stype_info{};
 
 namespace shader_object {
 
-static const char* kLayerName = "VkLayer_khronos_shader_object";
+static const char* kLayerName = "VK_LAYER_KHRONOS_shader_object";
 static const VkExtensionProperties kExtensionProperties = {VK_EXT_SHADER_OBJECT_EXTENSION_NAME, VK_EXT_SHADER_OBJECT_SPEC_VERSION};
-
-static const char* const kEnvarForceEnable =
-#if defined(__ANDROID__)
-    "debug.vulkan.shader_object.force_enable";
-#else
-    "VK_SHADER_OBJECT_FORCE_ENABLE";
-#endif
-static const char* const kLayerSettingsForceEnable = "khronos_shader_object.force_enable";
-
-static void string_tolower(std::string &s) {
-    for (auto& c: s) {
-        c = tolower(c);
-    }
-}
-
-static bool GetForceEnable() {
-    bool result = false;
-    std::string setting = GetEnvironment(kEnvarForceEnable);
-    if (setting.empty()) {
-        setting = GetLayerOption(kLayerSettingsForceEnable);
-    }
-    if (!setting.empty()) {
-        string_tolower(setting);
-        if (setting == "true") {
-            result = true;
-        } else {
-            result = std::atoi(setting.c_str()) != 0;
-        }
-    }
-    return result;
-}
 
 class AlignedMemory {
   public:
@@ -1219,11 +1191,16 @@ class CommandBufferData {
     FullDrawStateData* draw_state_data_;
 };
 
+struct LayerSettings {
+    bool force_enable{false};
+};
+
 struct InstanceData {
     LayerDispatchInstance vtable;
     VkInstance            instance;
     VkPhysicalDevice*     physical_devices;
     uint32_t              physical_device_count;
+    LayerSettings         layer_settings;
 };
 
 struct PhysicalDeviceData {
@@ -2610,6 +2587,42 @@ static VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetInstanceProcAddr(VkInstance i
 
 static VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL GetDeviceProcAddr(VkDevice device, const char* pName);
 
+void InitLayerSettings(const VkInstanceCreateInfo* pCreateInfo, const VkAllocationCallbacks* pAllocator, LayerSettings* layer_settings) {
+    assert(layer_settings != nullptr);
+
+    const VkLayerSettingsCreateInfoEXT* create_info = vkuFindLayerSettingsCreateInfo(pCreateInfo);
+
+    VkuLayerSettingSet layer_setting_set = VK_NULL_HANDLE;
+    vkuCreateLayerSettingSet(kLayerName, create_info, pAllocator, nullptr, &layer_setting_set);
+
+    static const char* setting_names[] = {kLayerSettingsForceEnable, kLayerSettingsCustomSTypeInfo};
+    uint32_t setting_name_count = static_cast<uint32_t>(std::size(setting_names));
+
+    uint32_t unknown_setting_count = 0;
+    vkuGetUnknownSettings(create_info, setting_name_count, setting_names, &unknown_setting_count, nullptr);
+
+    if (unknown_setting_count > 0) {
+        std::vector<const char*> unknown_settings;
+        unknown_settings.resize(unknown_setting_count);
+
+        vkuGetUnknownSettings(create_info, setting_name_count, setting_names, &unknown_setting_count, &unknown_settings[0]);
+
+        for (std::size_t i = 0, n = unknown_settings.size(); i < n; ++i) {
+            LOG("Unknown %s setting listed in VkLayerSettingsCreateInfoEXT, this setting is ignored.\n", unknown_settings[i]);
+        }
+    }
+
+    if (vkuHasLayerSetting(layer_setting_set, kLayerSettingsForceEnable)) {
+        vkuGetLayerSettingValue(layer_setting_set, kLayerSettingsForceEnable, layer_settings->force_enable);
+    }
+
+    if (vkuHasLayerSetting(layer_setting_set, kLayerSettingsCustomSTypeInfo)) {
+        vkuGetLayerSettingValues(layer_setting_set, kLayerSettingsCustomSTypeInfo, custom_stype_info);
+    }
+
+    vkuDestroyLayerSettingSet(layer_setting_set, pAllocator);
+}
+
 static VKAPI_ATTR VkResult VKAPI_CALL CreateInstance(const VkInstanceCreateInfo* pCreateInfo,
                                                      const VkAllocationCallbacks* pAllocator, VkInstance* pInstance) {
     auto allocator = pAllocator ? *pAllocator : kDefaultAllocator;
@@ -2652,6 +2665,8 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateInstance(const VkInstanceCreateInfo*
     instance_data->physical_devices = reinterpret_cast<VkPhysicalDevice*>(instance_data + 1);
     instance_data->physical_device_count = physical_device_count;
     instance_data->vtable.Initialize(*pInstance, fpGetInstanceProcAddr);
+
+    InitLayerSettings(pCreateInfo, pAllocator, &instance_data->layer_settings);
 
     result = fpEnumeratePhysicalDevices(*pInstance, &instance_data->physical_device_count, instance_data->physical_devices);
     ASSERT(result == VK_SUCCESS);
@@ -2917,7 +2932,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateDevice(VkPhysicalDevice physicalDevi
     // only enable the layer if the application asked for the extension and feature AND the driver does not have a native
     // implementation (unless if the user specified to ignore the native implementation via environment variable)
     bool enable_layer = shader_object_feature_requested && shader_object_extension_requested;
-    bool ignore_native_implementation = GetForceEnable();
+    bool ignore_native_implementation = instance_data->layer_settings.force_enable;
     if (ignore_native_implementation) {
         DEBUG_LOG("ignoring native driver implementation of shader object\n");
     }
@@ -3044,7 +3059,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateDevice(VkPhysicalDevice physicalDevi
 
         // The layer requests a private data slot for command buffers
         VkDevicePrivateDataCreateInfo reserved_private_data_slot{
-            VK_STRUCTURE_TYPE_PRIVATE_DATA_SLOT_CREATE_INFO,
+            VK_STRUCTURE_TYPE_DEVICE_PRIVATE_DATA_CREATE_INFO,
             appended_features_chain,
             1
         };
@@ -3259,7 +3274,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateShadersEXT(VkDevice device, uint32_t
     auto const& allocator = pAllocator ? *pAllocator : kDefaultAllocator;
     auto const& device_data = *device_data_map.Get(device);
     auto const& vtable = device_data.vtable;
-    memset(pShaders, 0, sizeof(VkShaderEXT*) * createInfoCount);
+    memset(pShaders, 0, sizeof(VkShaderEXT) * createInfoCount);
 
     // First, create individual shaders
     bool are_graphics_shaders_linked = false;
@@ -3268,7 +3283,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateShadersEXT(VkDevice device, uint32_t
         auto shader = reinterpret_cast<Shader**>(&pShaders[i]);
         result = Shader::Create(device_data, pCreateInfos[i], allocator, shader);
         if (result != VK_SUCCESS) {
-            *shader = nullptr;
+            memset(shader, 0u, sizeof(VkShaderEXT));
             successfulCreateCount = i;
             break;
         }

@@ -1,3 +1,124 @@
+vulkan-extensionlayer (1.3.273.0~rc1-1lunarg22.04-1) jammy; urgency=medium
+
+  [ ziga-lunarg ]
+  * shaderObject: Fix link to shader object layer in docs
+
+  [ Christophe ]
+  * layers: Fix inconsistant naming convensions
+  * review: Updated documentation
+
+  [ Juan Ramos ]
+  * doc: Fix inconsistent json description
+
+  [ ziga-lunarg ]
+  * sync2: Report extension only once
+  * tests: Test sync2 extension is found once
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.262
+
+  [ Juan Ramos ]
+  * android: Port VVL Android fixes
+  * android: Fix linker errors resulting from ndk-26
+
+  [ ziga-lunarg ]
+  * shaderObject: Fix setting handles to null in x86
+  * tests: Read property instead of using number
+
+  [ Juan Ramos ]
+  * build: Remove ndk-build
+  * ci: Set ccache consistently
+
+  [ Christophe ]
+  * layers: Add layer settings library
+
+  [ Juan Ramos ]
+  * android: Remove strings.xml
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.263
+
+  [ froge ]
+  * layers: Use correct sType
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers to 1.3.264
+  * bulid: Update VUL to 1.3.264
+
+  [ Christophe ]
+  * cmake: Use common LunarG function for build config
+  * layers: Implement vlGetUnknownSettings
+
+  [ unknown ]
+  * build: Update to use external vk_format_utils.h
+  * deps: Update to latest Vulkan-Utility-Libraries
+
+  [ Christophe ]
+  * ci: Fix ccache issue on Windows
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and VUL to 1.3.265
+  * build: Update Vulkan-Headers and VUL to 1.3.266
+  * build: Update Vulkan-Headers and VUL to 1.3.267
+
+  [ Juan Ramos ]
+  * tests: Update gtest to v1.14.0
+
+  [ Jeremy Gebben ]
+  * tests: Replace custom EXPECT() macro with gtest EXPECT_*()
+
+  [ Vikram Kushwaha ]
+  * layers: Fix race in decompression shader
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and VUL to 1.3.268
+  * build: Update shader dependencies for 1.3.268
+
+  [ ziga-lunarg ]
+  * tests: Add missing check for shader stages
+
+  [ unknown ]
+  * tests: Make failed assertions throw
+
+  [ Richard S. Wright Jr ]
+  * tests: Add portability for sync2 tests
+
+  [ Juan Ramos ]
+  * scripts: Update UPDATE_DEPS
+  * ci: Add dependabot
+
+  [ dependabot[bot] ]
+  * build(deps): Bump actions/checkout from 3 to 4
+  * vel: Remove unused WSI library complexity
+  * ci: Rename job to android
+  * iOS: Add iOS build to CI
+  * ci: Speed up MacOS ci
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and VUL to 1.3.269
+  * build: Update Vulkan-Headers and VUL to 1.3.270
+  * scripts: Add --strip to the android.py install command
+
+  [ Charles Giessen ]
+  * code: Use #pragma once everywhere
+  * test: Use volk instead of custom function loader
+
+  [ Juan Ramos ]
+  * android: Minor doc fix
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and VUL to 1.3.271
+  * build: Update Vulkan-Headers and VUL to 1.3.272
+
+  [ dependabot[bot] ]
+  * build(deps): Bump actions/setup-python from 4 to 5
+  * build: Update Vulkan-Headers and VUL to 1.3.273
+
+  [ John Zupin ]
+  * packaging: debian: update build deps to include VUL
+
+ -- john <john@odin>  Wed, 13 Dec 2023 15:08:37 -0700
+
 vulkan-extensionlayer (1.3.261.0~rc1-1lunarg22.04-1) jammy; urgency=medium
 
   [ ziga-lunarg ]

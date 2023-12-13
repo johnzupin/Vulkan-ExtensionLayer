@@ -35,7 +35,22 @@ if (ANDROID)
     add_library(vk_extension_layer_tests MODULE)
 else()
     add_executable(vk_extension_layer_tests)
+
+    add_dependencies(vk_extension_layer_tests generate_test_layer_location)
+
+    target_compile_definitions(vk_extension_layer_tests PRIVATE
+        SHADER_OBJECT_BINARY_PATH="$<TARGET_FILE_DIR:VkLayer_khronos_shader_object>"
+    )
+
+    target_sources(vk_extension_layer_tests PRIVATE
+        shader_object_tests.cpp
+    )
 endif()
+
+# Needed for VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME
+target_compile_definitions(vk_extension_layer_tests PRIVATE VK_ENABLE_BETA_EXTENSIONS)
+
+lunarg_target_compiler_configurations(vk_extension_layer_tests ${BUILD_WERROR})
 
 target_sources(vk_extension_layer_tests PRIVATE
     extension_layer_tests.cpp
@@ -47,21 +62,9 @@ target_sources(vk_extension_layer_tests PRIVATE
     test_environment.cpp
 )
 
-if (NOT ANDROID)
-    target_compile_definitions(vk_extension_layer_tests PRIVATE SHADER_OBJECT_BINARY_PATH="$<TARGET_FILE_DIR:VkLayer_khronos_shader_object>")
-    target_sources(vk_extension_layer_tests PRIVATE shader_object_tests.cpp)
-endif()
-
 set_target_properties(vk_extension_layer_tests PROPERTIES VS_DEBUGGER_ENVIRONMENT "VK_LAYER_PATH=$<TARGET_FILE_DIR:VkLayer_khronos_synchronization2>")
 
-add_dependencies(vk_extension_layer_tests VkLayer_khronos_synchronization2 VkLayer_khronos_memory_decompression)
-
-if (NOT ANDROID)
-    add_dependencies(vk_extension_layer_tests generate_test_layer_location)
-endif()
-
-# TODO: Remove once ndk-build is gone
-target_compile_definitions(vk_extension_layer_tests PRIVATE VVL_TESTS_USE_CMAKE)
+add_dependencies(vk_extension_layer_tests VkLayer_khronos_synchronization2 VkLayer_khronos_shader_object VkLayer_khronos_memory_decompression)
 
 target_include_directories(vk_extension_layer_tests PRIVATE .)
 
@@ -90,8 +93,11 @@ find_package(GTest REQUIRED CONFIG QUIET)
 
 find_package(glslang REQUIRED CONFIG QUIET)
 
+find_package(volk QUIET CONFIG)
+
 target_link_libraries(vk_extension_layer_tests PRIVATE
     VkExtLayer_utils
+    Vulkan::LayerSettings
     Vulkan::Headers
     GTest::gtest
     GTest::gtest_main
@@ -103,11 +109,12 @@ target_link_libraries(vk_extension_layer_tests PRIVATE
     glslang::HLSL
     glslang::SPIRV
     glslang::SPVRemapper
-    $<TARGET_NAME_IF_EXISTS:PkgConfig::XCB>
-    $<TARGET_NAME_IF_EXISTS:PkgConfig::X11>
-    $<TARGET_NAME_IF_EXISTS:PkgConfig::WAYlAND_CLIENT>
     ${CMAKE_DL_LIBS}
+    volk::volk_headers
 )
+
+# Needed for volk to work correctly
+target_compile_definitions(vk_extension_layer_tests PRIVATE VK_NO_PROTOTYPES)
 
 if (ANDROID)
     add_subdirectory(android)

@@ -42,8 +42,11 @@ if (UPDATE_DEPS)
     list(APPEND update_dep_command "${_build_type}")
 
     set(UPDATE_DEPS_DIR_SUFFIX "${_build_type}")
-    if (ANDROID)
-        set(UPDATE_DEPS_DIR_SUFFIX "android/${UPDATE_DEPS_DIR_SUFFIX}")
+    if (CMAKE_CROSSCOMPILING)
+        set(UPDATE_DEPS_DIR_SUFFIX "${CMAKE_SYSTEM_NAME}/${UPDATE_DEPS_DIR_SUFFIX}/${CMAKE_SYSTEM_PROCESSOR}")
+    else()
+        math(EXPR bitness "8 * ${CMAKE_SIZEOF_VOID_P}")
+        set(UPDATE_DEPS_DIR_SUFFIX "${UPDATE_DEPS_DIR_SUFFIX}/${bitness}")
     endif()
     set(UPDATE_DEPS_DIR "${PROJECT_SOURCE_DIR}/external/${UPDATE_DEPS_DIR_SUFFIX}" CACHE PATH "Location where update_deps.py installs packages")
     list(APPEND update_dep_command "--dir" )
@@ -58,6 +61,18 @@ if (UPDATE_DEPS)
     endif()
 
     list(APPEND cmake_vars "CMAKE_TOOLCHAIN_FILE")
+
+    # Avoids manually setting CMAKE_SYSTEM_NAME unless it's needed:
+    # https://cmake.org/cmake/help/latest/variable/CMAKE_CROSSCOMPILING.html
+    if (NOT "${CMAKE_SYSTEM_NAME}" STREQUAL "${CMAKE_HOST_SYSTEM_NAME}")
+        list(APPEND cmake_vars "CMAKE_SYSTEM_NAME")
+    endif()
+    if (APPLE)
+        list(APPEND cmake_vars "CMAKE_OSX_ARCHITECTURES" "CMAKE_OSX_DEPLOYMENT_TARGET")
+    endif()
+    if (NOT MSVC_IDE)
+        list(APPEND cmake_vars "CMAKE_CXX_COMPILER" "CMAKE_C_COMPILER" "CMAKE_ASM_COMPILER")
+    endif()
     if (ANDROID)
         list(APPEND cmake_vars "ANDROID_PLATFORM" "CMAKE_ANDROID_ARCH_ABI" "CMAKE_ANDROID_STL_TYPE" "CMAKE_ANDROID_RTTI" "CMAKE_ANDROID_EXCEPTIONS" "ANDROID_USE_LEGACY_TOOLCHAIN_FILE")
     endif()
@@ -101,6 +116,55 @@ if (UPDATE_DEPS)
         include("${UPDATE_DEPS_DIR}/helper.cmake")
     endif()
 endif()
+
+# Configure compiler build options common to all targets
+function(lunarg_target_compiler_configurations TARGET_NAME WERROR_OPTION)
+    if (${WERROR_OPTION})
+        if (MSVC)
+            target_compile_options(${TARGET_NAME} INTERFACE /WX)
+            target_link_options(${TARGET_NAME} INTERFACE /WX)
+        else()
+            target_compile_options(${TARGET_NAME} INTERFACE -Werror)
+        endif()
+    endif()
+
+    if(${CMAKE_CXX_COMPILER_ID} MATCHES "(GNU|Clang)")
+        target_compile_options(${TARGET_NAME} INTERFACE
+            -Wall
+            -Wextra
+            -Wpointer-arith
+        )
+        if(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+            target_compile_options(${TARGET_NAME} INTERFACE
+                -Wconversion
+                -Wimplicit-fallthrough
+                -Wstring-conversion
+            )
+        endif()
+    elseif(MSVC)
+        target_compile_options(${TARGET_NAME} INTERFACE
+            /W4
+            /we5038 # Enable warning about MIL ordering in constructors
+        )
+
+        # Enforce stricter ISO C++
+        target_compile_options(${TARGET_NAME} INTERFACE /permissive-)
+
+        target_compile_options(${TARGET_NAME} INTERFACE $<$<BOOL:${MSVC_IDE}>:/MP>) # Speed up Visual Studio builds
+
+        # Allow usage of unsafe CRT functions and minimize what Windows.h leaks
+        target_compile_definitions(${TARGET_NAME} INTERFACE _CRT_SECURE_NO_WARNINGS NOMINMAX WIN32_LEAN_AND_MEAN)
+    endif()
+endfunction()
+
+if (VULKAN_HEADERS_INSTALL_DIR)
+    list(APPEND CMAKE_PREFIX_PATH ${VULKAN_HEADERS_INSTALL_DIR})
+    set(CMAKE_REQUIRE_FIND_PACKAGE_VulkanHeaders TRUE PARENT_SCOPE)
+endif()
+if (VULKAN_UTILITY_LIBRARIES_INSTALL_DIR)
+    list(APPEND CMAKE_PREFIX_PATH ${VULKAN_UTILITY_LIBRARIES_INSTALL_DIR})
+    set(CMAKE_REQUIRE_FIND_PACKAGE_VulkanUtilityLibraries TRUE PARENT_SCOPE)
+endif()
 if (SPIRV_HEADERS_INSTALL_DIR)
     list(APPEND CMAKE_PREFIX_PATH ${SPIRV_HEADERS_INSTALL_DIR})
 endif()
@@ -110,11 +174,11 @@ endif()
 if (GOOGLETEST_INSTALL_DIR)
     list(APPEND CMAKE_PREFIX_PATH ${GOOGLETEST_INSTALL_DIR})
 endif()
-if (VULKAN_HEADERS_INSTALL_DIR)
-    list(APPEND CMAKE_PREFIX_PATH ${VULKAN_HEADERS_INSTALL_DIR})
-endif()
 if (GLSLANG_INSTALL_DIR)
     list(APPEND CMAKE_PREFIX_PATH ${GLSLANG_INSTALL_DIR})
+endif()
+if (VOLK_INSTALL_DIR)
+    list(APPEND CMAKE_PREFIX_PATH ${VOLK_INSTALL_DIR})
 endif()
 
 if (CMAKE_CROSSCOMPILING)

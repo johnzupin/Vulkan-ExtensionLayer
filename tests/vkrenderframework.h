@@ -19,17 +19,9 @@
  * Author: Dave Houlton <daveh@lunarg.com>
  */
 
-#ifndef VKRENDERFRAMEWORK_H
-#define VKRENDERFRAMEWORK_H
+#pragma once
 
-#include "lvt_function_pointers.h"
-
-#if defined(VVL_TESTS_USE_CMAKE)
 #include "vktestframework.h"
-#else
-#include "vktestframeworkandroid.h"
-class VkImageObj;
-#endif
 
 #if defined(ANDROID)
 #include <android/log.h>
@@ -43,8 +35,6 @@ class VkImageObj;
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-
-#include "vk_layer_config.h"
 
 using vk_testing::MakeVkHandles;
 
@@ -129,7 +119,7 @@ class ErrorMonitor {
     // Helpers
 
     // ExpectSuccess now takes an optional argument allowing a custom combination of debug flags
-    void ExpectSuccess(VkDebugReportFlagsEXT const message_flag_mask = kErrorBit);
+    void ExpectSuccess(VkDebugReportFlagsEXT const message_flag_mask = VK_DEBUG_REPORT_ERROR_BIT_EXT);
 
     void VerifyFound();
     void VerifyNotFound();
@@ -170,10 +160,6 @@ struct DebugReporter {
         VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT, nullptr,
         VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT,
         &DebugCallback, &error_monitor_};
-    using DebugCreateFnType = PFN_vkCreateDebugReportCallbackEXT;
-    const char *debug_create_fn_name_ = "vkCreateDebugReportCallbackEXT";
-    using DebugDestroyFnType = PFN_vkDestroyDebugReportCallbackEXT;
-    const char *debug_destroy_fn_name_ = "vkDestroyDebugReportCallbackEXT";
     VkDebugReportCallbackEXT debug_obj_ = VK_NULL_HANDLE;
 #else
     static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity,
@@ -190,10 +176,6 @@ struct DebugReporter {
         VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
         &DebugCallback,
         &error_monitor_};
-    using DebugCreateFnType = PFN_vkCreateDebugUtilsMessengerEXT;
-    const char *debug_create_fn_name_ = "vkCreateDebugUtilsMessengerEXT";
-    using DebugDestroyFnType = PFN_vkDestroyDebugUtilsMessengerEXT;
-    const char *debug_destroy_fn_name_ = "vkDestroyDebugUtilsMessengerEXT";
     VkDebugUtilsMessengerEXT debug_obj_ = VK_NULL_HANDLE;
 #endif
 };
@@ -657,4 +639,3 @@ class VkPipelineObj : public vk_testing::Pipeline {
     std::vector<VkPipelineColorBlendAttachmentState> m_colorAttachments;
 };
 
-#endif  // VKRENDERFRAMEWORK_H

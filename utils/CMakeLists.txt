@@ -1,6 +1,6 @@
 # ~~~
-# Copyright (c) 2014-2023 Valve Corporation
-# Copyright (c) 2014-2023 LunarG, Inc.
+# Copyright (c) 2014-2024 Valve Corporation
+# Copyright (c) 2014-2024 LunarG, Inc.
 # Copyright (c) 2019      Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +19,11 @@ add_library(VkExtLayer_utils STATIC)
 
 target_sources(VkExtLayer_utils PRIVATE
     allocator.cpp
-    generated/vk_safe_struct.cpp
+    generated/vk_safe_struct_core.cpp
+    generated/vk_safe_struct_ext.cpp
+    generated/vk_safe_struct_khr.cpp
+    generated/vk_safe_struct_utils.cpp
+    generated/vk_safe_struct_vendor.cpp
 )
 
 lunarg_target_compiler_configurations(VkExtLayer_utils ${BUILD_WERROR})
@@ -55,7 +59,7 @@ endif()
 target_link_libraries(VkExtLayer_utils PUBLIC Vulkan::Headers Vulkan::UtilityHeaders)
 
 if(ANDROID)
-    target_link_libraries(VkExtLayer_utils PUBLIC log)
+    target_link_libraries(VkExtLayer_utils PUBLIC android log)
 endif()
 
 target_include_directories(VkExtLayer_utils PUBLIC

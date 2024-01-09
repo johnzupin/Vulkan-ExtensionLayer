@@ -1,3 +1,13 @@
+vulkan-extensionlayer (1.3.275.0~rc1-1lunarg20.04-1) focal; urgency=medium
+
+  [ Jeremy Gebben ]
+  * scripts: Update scripts to match latest VVL
+  * build: Update Vulkan-Headers and VUL to 1.3.274
+  * build: Update shader toolchain for next sdk
+  * build: Update Vulkan-Headers and VUL to 1.3.275
+
+ -- john <john@odin>  Tue, 09 Jan 2024 16:06:18 -0700
+
 vulkan-extensionlayer (1.3.273.0~rc1-1lunarg20.04-1) focal; urgency=medium
 
   [ ziga-lunarg ]

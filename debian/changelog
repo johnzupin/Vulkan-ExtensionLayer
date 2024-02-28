@@ -1,3 +1,21 @@
+vulkan-extensionlayer (1.3.278.0~rc1-1lunarg20.04-1) focal; urgency=medium
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and VUL to 1.3.276
+  * build: Update Vulkan-Headers and VUL to 1.3.277
+
+  [ Christophe ]
+  * layers: Expose EXT_layer_settings from manifest
+
+  [ Jeremy Gebben ]
+  * build: Update SPIRV-Headers and -Tools
+  * build: Update volk to vulkan-sdk-1.3.275.0
+  * build: Update glslang to latest
+  * build: Update Vulkan-Headers and VUL to 1.3.278
+  * build: Update SPIRV-Headers, -Tools and glslang to latest
+
+ -- john <john@odin>  Wed, 28 Feb 2024 11:26:09 -0700
+
 vulkan-extensionlayer (1.3.275.0~rc1-1lunarg20.04-1) focal; urgency=medium
 
   [ Jeremy Gebben ]

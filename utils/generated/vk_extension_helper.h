@@ -458,6 +458,8 @@ struct DeviceExtensions : public InstanceExtensions {
     ExtEnabled vk_khr_vulkan_memory_model{kNotEnabled};
     ExtEnabled vk_khr_shader_terminate_invocation{kNotEnabled};
     ExtEnabled vk_khr_fragment_shading_rate{kNotEnabled};
+    ExtEnabled vk_khr_dynamic_rendering_local_read{kNotEnabled};
+    ExtEnabled vk_khr_shader_quad_control{kNotEnabled};
     ExtEnabled vk_khr_spirv_1_4{kNotEnabled};
     ExtEnabled vk_khr_separate_depth_stencil_layouts{kNotEnabled};
     ExtEnabled vk_khr_present_wait{kNotEnabled};
@@ -480,12 +482,20 @@ struct DeviceExtensions : public InstanceExtensions {
     ExtEnabled vk_khr_format_feature_flags2{kNotEnabled};
     ExtEnabled vk_khr_ray_tracing_maintenance1{kNotEnabled};
     ExtEnabled vk_khr_maintenance4{kNotEnabled};
+    ExtEnabled vk_khr_shader_subgroup_rotate{kNotEnabled};
+    ExtEnabled vk_khr_shader_maximal_reconvergence{kNotEnabled};
     ExtEnabled vk_khr_maintenance5{kNotEnabled};
     ExtEnabled vk_khr_ray_tracing_position_fetch{kNotEnabled};
     ExtEnabled vk_khr_cooperative_matrix{kNotEnabled};
+    ExtEnabled vk_khr_video_decode_av1{kNotEnabled};
     ExtEnabled vk_khr_video_maintenance1{kNotEnabled};
     ExtEnabled vk_khr_vertex_attribute_divisor{kNotEnabled};
+    ExtEnabled vk_khr_load_store_op_none{kNotEnabled};
+    ExtEnabled vk_khr_shader_float_controls2{kNotEnabled};
+    ExtEnabled vk_khr_index_type_uint8{kNotEnabled};
+    ExtEnabled vk_khr_line_rasterization{kNotEnabled};
     ExtEnabled vk_khr_calibrated_timestamps{kNotEnabled};
+    ExtEnabled vk_khr_shader_expect_assume{kNotEnabled};
     ExtEnabled vk_khr_maintenance6{kNotEnabled};
     ExtEnabled vk_nv_glsl_shader{kNotEnabled};
     ExtEnabled vk_ext_depth_range_unrestricted{kNotEnabled};
@@ -603,6 +613,7 @@ struct DeviceExtensions : public InstanceExtensions {
     ExtEnabled vk_ext_index_type_uint8{kNotEnabled};
     ExtEnabled vk_ext_extended_dynamic_state{kNotEnabled};
     ExtEnabled vk_ext_host_image_copy{kNotEnabled};
+    ExtEnabled vk_ext_map_memory_placed{kNotEnabled};
     ExtEnabled vk_ext_shader_atomic_float2{kNotEnabled};
     ExtEnabled vk_ext_swapchain_maintenance1{kNotEnabled};
     ExtEnabled vk_ext_shader_demote_to_helper_invocation{kNotEnabled};
@@ -713,6 +724,7 @@ struct DeviceExtensions : public InstanceExtensions {
     ExtEnabled vk_qnx_external_memory_screen_buffer{kNotEnabled};
     ExtEnabled vk_msft_layered_driver{kNotEnabled};
     ExtEnabled vk_nv_descriptor_pool_overallocation{kNotEnabled};
+    ExtEnabled vk_nv_shader_atomic_float16_vector{kNotEnabled};
     ExtEnabled vk_khr_acceleration_structure{kNotEnabled};
     ExtEnabled vk_khr_ray_tracing_pipeline{kNotEnabled};
     ExtEnabled vk_khr_ray_query{kNotEnabled};
@@ -1011,6 +1023,15 @@ struct DeviceExtensions : public InstanceExtensions {
                         {{{&DeviceExtensions::vk_khr_create_renderpass2, VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME},
                           {&DeviceExtensions::vk_khr_get_physical_device_properties2,
                            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME}}})},
+            {VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME,
+             DeviceInfo(&DeviceExtensions::vk_khr_dynamic_rendering_local_read,
+                        {{{&DeviceExtensions::vk_khr_dynamic_rendering, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME}}})},
+            {VK_KHR_SHADER_QUAD_CONTROL_EXTENSION_NAME,
+             DeviceInfo(
+                 &DeviceExtensions::vk_khr_shader_quad_control,
+                 {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"},
+                   {&DeviceExtensions::vk_khr_vulkan_memory_model, VK_KHR_VULKAN_MEMORY_MODEL_EXTENSION_NAME},
+                   {&DeviceExtensions::vk_khr_shader_maximal_reconvergence, VK_KHR_SHADER_MAXIMAL_RECONVERGENCE_EXTENSION_NAME}}})},
             {VK_KHR_SPIRV_1_4_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_khr_spirv_1_4,
                         {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"},
@@ -1083,6 +1104,10 @@ struct DeviceExtensions : public InstanceExtensions {
                         {{{&DeviceExtensions::vk_khr_acceleration_structure, VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME}}})},
             {VK_KHR_MAINTENANCE_4_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_khr_maintenance4, {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"}}})},
+            {VK_KHR_SHADER_SUBGROUP_ROTATE_EXTENSION_NAME, DeviceInfo(&DeviceExtensions::vk_khr_shader_subgroup_rotate, {})},
+            {VK_KHR_SHADER_MAXIMAL_RECONVERGENCE_EXTENSION_NAME,
+             DeviceInfo(&DeviceExtensions::vk_khr_shader_maximal_reconvergence,
+                        {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"}}})},
             {VK_KHR_MAINTENANCE_5_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_khr_maintenance5,
                         {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"},
@@ -1093,6 +1118,9 @@ struct DeviceExtensions : public InstanceExtensions {
             {VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME, DeviceInfo(&DeviceExtensions::vk_khr_cooperative_matrix,
                                                                   {{{&DeviceExtensions::vk_khr_get_physical_device_properties2,
                                                                      VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME}}})},
+            {VK_KHR_VIDEO_DECODE_AV1_EXTENSION_NAME,
+             DeviceInfo(&DeviceExtensions::vk_khr_video_decode_av1,
+                        {{{&DeviceExtensions::vk_khr_video_decode_queue, VK_KHR_VIDEO_DECODE_QUEUE_EXTENSION_NAME}}})},
             {VK_KHR_VIDEO_MAINTENANCE_1_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_khr_video_maintenance1,
                         {{{&DeviceExtensions::vk_khr_video_queue, VK_KHR_VIDEO_QUEUE_EXTENSION_NAME}}})},
@@ -1100,9 +1128,23 @@ struct DeviceExtensions : public InstanceExtensions {
              DeviceInfo(&DeviceExtensions::vk_khr_vertex_attribute_divisor,
                         {{{&DeviceExtensions::vk_khr_get_physical_device_properties2,
                            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME}}})},
+            {VK_KHR_LOAD_STORE_OP_NONE_EXTENSION_NAME, DeviceInfo(&DeviceExtensions::vk_khr_load_store_op_none, {})},
+            {VK_KHR_SHADER_FLOAT_CONTROLS_2_EXTENSION_NAME,
+             DeviceInfo(&DeviceExtensions::vk_khr_shader_float_controls2,
+                        {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"},
+                          {&DeviceExtensions::vk_khr_shader_float_controls, VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME}}})},
+            {VK_KHR_INDEX_TYPE_UINT8_EXTENSION_NAME,
+             DeviceInfo(&DeviceExtensions::vk_khr_index_type_uint8, {{{&DeviceExtensions::vk_khr_get_physical_device_properties2,
+                                                                       VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME}}})},
+            {VK_KHR_LINE_RASTERIZATION_EXTENSION_NAME, DeviceInfo(&DeviceExtensions::vk_khr_line_rasterization,
+                                                                  {{{&DeviceExtensions::vk_khr_get_physical_device_properties2,
+                                                                     VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME}}})},
             {VK_KHR_CALIBRATED_TIMESTAMPS_EXTENSION_NAME, DeviceInfo(&DeviceExtensions::vk_khr_calibrated_timestamps,
                                                                      {{{&DeviceExtensions::vk_khr_get_physical_device_properties2,
                                                                         VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME}}})},
+            {VK_KHR_SHADER_EXPECT_ASSUME_EXTENSION_NAME, DeviceInfo(&DeviceExtensions::vk_khr_shader_expect_assume,
+                                                                    {{{&DeviceExtensions::vk_khr_get_physical_device_properties2,
+                                                                       VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME}}})},
             {VK_KHR_MAINTENANCE_6_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_khr_maintenance6, {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"}}})},
             {VK_NV_GLSL_SHADER_EXTENSION_NAME, DeviceInfo(&DeviceExtensions::vk_nv_glsl_shader, {})},
@@ -1428,6 +1470,9 @@ struct DeviceExtensions : public InstanceExtensions {
                            VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME},
                           {&DeviceExtensions::vk_khr_copy_commands2, VK_KHR_COPY_COMMANDS_2_EXTENSION_NAME},
                           {&DeviceExtensions::vk_khr_format_feature_flags2, VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME}}})},
+            {VK_EXT_MAP_MEMORY_PLACED_EXTENSION_NAME,
+             DeviceInfo(&DeviceExtensions::vk_ext_map_memory_placed,
+                        {{{&DeviceExtensions::vk_khr_map_memory2, VK_KHR_MAP_MEMORY_2_EXTENSION_NAME}}})},
             {VK_EXT_SHADER_ATOMIC_FLOAT_2_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_ext_shader_atomic_float2,
                         {{{&DeviceExtensions::vk_ext_shader_atomic_float, VK_EXT_SHADER_ATOMIC_FLOAT_EXTENSION_NAME}}})},
@@ -1831,6 +1876,8 @@ struct DeviceExtensions : public InstanceExtensions {
             {VK_NV_DESCRIPTOR_POOL_OVERALLOCATION_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_nv_descriptor_pool_overallocation,
                         {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"}}})},
+            {VK_NV_SHADER_ATOMIC_FLOAT16_VECTOR_EXTENSION_NAME,
+             DeviceInfo(&DeviceExtensions::vk_nv_shader_atomic_float16_vector, {})},
             {VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_khr_acceleration_structure,
                         {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"},
@@ -1995,6 +2042,8 @@ static const std::set<std::string> kDeviceExtensionNames = {
     VK_KHR_VULKAN_MEMORY_MODEL_EXTENSION_NAME,
     VK_KHR_SHADER_TERMINATE_INVOCATION_EXTENSION_NAME,
     VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME,
+    VK_KHR_DYNAMIC_RENDERING_LOCAL_READ_EXTENSION_NAME,
+    VK_KHR_SHADER_QUAD_CONTROL_EXTENSION_NAME,
     VK_KHR_SPIRV_1_4_EXTENSION_NAME,
     VK_KHR_SEPARATE_DEPTH_STENCIL_LAYOUTS_EXTENSION_NAME,
     VK_KHR_PRESENT_WAIT_EXTENSION_NAME,
@@ -2017,12 +2066,20 @@ static const std::set<std::string> kDeviceExtensionNames = {
     VK_KHR_FORMAT_FEATURE_FLAGS_2_EXTENSION_NAME,
     VK_KHR_RAY_TRACING_MAINTENANCE_1_EXTENSION_NAME,
     VK_KHR_MAINTENANCE_4_EXTENSION_NAME,
+    VK_KHR_SHADER_SUBGROUP_ROTATE_EXTENSION_NAME,
+    VK_KHR_SHADER_MAXIMAL_RECONVERGENCE_EXTENSION_NAME,
     VK_KHR_MAINTENANCE_5_EXTENSION_NAME,
     VK_KHR_RAY_TRACING_POSITION_FETCH_EXTENSION_NAME,
     VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME,
+    VK_KHR_VIDEO_DECODE_AV1_EXTENSION_NAME,
     VK_KHR_VIDEO_MAINTENANCE_1_EXTENSION_NAME,
     VK_KHR_VERTEX_ATTRIBUTE_DIVISOR_EXTENSION_NAME,
+    VK_KHR_LOAD_STORE_OP_NONE_EXTENSION_NAME,
+    VK_KHR_SHADER_FLOAT_CONTROLS_2_EXTENSION_NAME,
+    VK_KHR_INDEX_TYPE_UINT8_EXTENSION_NAME,
+    VK_KHR_LINE_RASTERIZATION_EXTENSION_NAME,
     VK_KHR_CALIBRATED_TIMESTAMPS_EXTENSION_NAME,
+    VK_KHR_SHADER_EXPECT_ASSUME_EXTENSION_NAME,
     VK_KHR_MAINTENANCE_6_EXTENSION_NAME,
     VK_NV_GLSL_SHADER_EXTENSION_NAME,
     VK_EXT_DEPTH_RANGE_UNRESTRICTED_EXTENSION_NAME,
@@ -2150,6 +2207,7 @@ static const std::set<std::string> kDeviceExtensionNames = {
     VK_EXT_INDEX_TYPE_UINT8_EXTENSION_NAME,
     VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME,
     VK_EXT_HOST_IMAGE_COPY_EXTENSION_NAME,
+    VK_EXT_MAP_MEMORY_PLACED_EXTENSION_NAME,
     VK_EXT_SHADER_ATOMIC_FLOAT_2_EXTENSION_NAME,
     VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME,
     VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME,
@@ -2272,6 +2330,7 @@ static const std::set<std::string> kDeviceExtensionNames = {
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
     VK_MSFT_LAYERED_DRIVER_EXTENSION_NAME,
     VK_NV_DESCRIPTOR_POOL_OVERALLOCATION_EXTENSION_NAME,
+    VK_NV_SHADER_ATOMIC_FLOAT16_VECTOR_EXTENSION_NAME,
     VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
     VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
     VK_KHR_RAY_QUERY_EXTENSION_NAME,

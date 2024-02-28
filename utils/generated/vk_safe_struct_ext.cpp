@@ -3,9 +3,9 @@
 
 /***************************************************************************
  *
- * Copyright (c) 2015-2023 The Khronos Group Inc.
- * Copyright (c) 2015-2023 Valve Corporation
- * Copyright (c) 2015-2023 LunarG, Inc.
+ * Copyright (c) 2015-2024 The Khronos Group Inc.
+ * Copyright (c) 2015-2024 Valve Corporation
+ * Copyright (c) 2015-2024 LunarG, Inc.
  * Copyright (c) 2015-2023 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -5377,206 +5377,6 @@ void safe_VkHeadlessSurfaceCreateInfoEXT::initialize(const safe_VkHeadlessSurfac
     pNext = SafePnextCopy(copy_src->pNext);
 }
 
-safe_VkPhysicalDeviceLineRasterizationFeaturesEXT::safe_VkPhysicalDeviceLineRasterizationFeaturesEXT(
-    const VkPhysicalDeviceLineRasterizationFeaturesEXT* in_struct, [[maybe_unused]] PNextCopyState* copy_state, bool copy_pnext)
-    : sType(in_struct->sType),
-      rectangularLines(in_struct->rectangularLines),
-      bresenhamLines(in_struct->bresenhamLines),
-      smoothLines(in_struct->smoothLines),
-      stippledRectangularLines(in_struct->stippledRectangularLines),
-      stippledBresenhamLines(in_struct->stippledBresenhamLines),
-      stippledSmoothLines(in_struct->stippledSmoothLines) {
-    if (copy_pnext) {
-        pNext = SafePnextCopy(in_struct->pNext, copy_state);
-    }
-}
-
-safe_VkPhysicalDeviceLineRasterizationFeaturesEXT::safe_VkPhysicalDeviceLineRasterizationFeaturesEXT()
-    : sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT),
-      pNext(nullptr),
-      rectangularLines(),
-      bresenhamLines(),
-      smoothLines(),
-      stippledRectangularLines(),
-      stippledBresenhamLines(),
-      stippledSmoothLines() {}
-
-safe_VkPhysicalDeviceLineRasterizationFeaturesEXT::safe_VkPhysicalDeviceLineRasterizationFeaturesEXT(
-    const safe_VkPhysicalDeviceLineRasterizationFeaturesEXT& copy_src) {
-    sType = copy_src.sType;
-    rectangularLines = copy_src.rectangularLines;
-    bresenhamLines = copy_src.bresenhamLines;
-    smoothLines = copy_src.smoothLines;
-    stippledRectangularLines = copy_src.stippledRectangularLines;
-    stippledBresenhamLines = copy_src.stippledBresenhamLines;
-    stippledSmoothLines = copy_src.stippledSmoothLines;
-    pNext = SafePnextCopy(copy_src.pNext);
-}
-
-safe_VkPhysicalDeviceLineRasterizationFeaturesEXT& safe_VkPhysicalDeviceLineRasterizationFeaturesEXT::operator=(
-    const safe_VkPhysicalDeviceLineRasterizationFeaturesEXT& copy_src) {
-    if (&copy_src == this) return *this;
-
-    FreePnextChain(pNext);
-
-    sType = copy_src.sType;
-    rectangularLines = copy_src.rectangularLines;
-    bresenhamLines = copy_src.bresenhamLines;
-    smoothLines = copy_src.smoothLines;
-    stippledRectangularLines = copy_src.stippledRectangularLines;
-    stippledBresenhamLines = copy_src.stippledBresenhamLines;
-    stippledSmoothLines = copy_src.stippledSmoothLines;
-    pNext = SafePnextCopy(copy_src.pNext);
-
-    return *this;
-}
-
-safe_VkPhysicalDeviceLineRasterizationFeaturesEXT::~safe_VkPhysicalDeviceLineRasterizationFeaturesEXT() { FreePnextChain(pNext); }
-
-void safe_VkPhysicalDeviceLineRasterizationFeaturesEXT::initialize(const VkPhysicalDeviceLineRasterizationFeaturesEXT* in_struct,
-                                                                   [[maybe_unused]] PNextCopyState* copy_state) {
-    FreePnextChain(pNext);
-    sType = in_struct->sType;
-    rectangularLines = in_struct->rectangularLines;
-    bresenhamLines = in_struct->bresenhamLines;
-    smoothLines = in_struct->smoothLines;
-    stippledRectangularLines = in_struct->stippledRectangularLines;
-    stippledBresenhamLines = in_struct->stippledBresenhamLines;
-    stippledSmoothLines = in_struct->stippledSmoothLines;
-    pNext = SafePnextCopy(in_struct->pNext, copy_state);
-}
-
-void safe_VkPhysicalDeviceLineRasterizationFeaturesEXT::initialize(
-    const safe_VkPhysicalDeviceLineRasterizationFeaturesEXT* copy_src, [[maybe_unused]] PNextCopyState* copy_state) {
-    sType = copy_src->sType;
-    rectangularLines = copy_src->rectangularLines;
-    bresenhamLines = copy_src->bresenhamLines;
-    smoothLines = copy_src->smoothLines;
-    stippledRectangularLines = copy_src->stippledRectangularLines;
-    stippledBresenhamLines = copy_src->stippledBresenhamLines;
-    stippledSmoothLines = copy_src->stippledSmoothLines;
-    pNext = SafePnextCopy(copy_src->pNext);
-}
-
-safe_VkPhysicalDeviceLineRasterizationPropertiesEXT::safe_VkPhysicalDeviceLineRasterizationPropertiesEXT(
-    const VkPhysicalDeviceLineRasterizationPropertiesEXT* in_struct, [[maybe_unused]] PNextCopyState* copy_state, bool copy_pnext)
-    : sType(in_struct->sType), lineSubPixelPrecisionBits(in_struct->lineSubPixelPrecisionBits) {
-    if (copy_pnext) {
-        pNext = SafePnextCopy(in_struct->pNext, copy_state);
-    }
-}
-
-safe_VkPhysicalDeviceLineRasterizationPropertiesEXT::safe_VkPhysicalDeviceLineRasterizationPropertiesEXT()
-    : sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES_EXT), pNext(nullptr), lineSubPixelPrecisionBits() {}
-
-safe_VkPhysicalDeviceLineRasterizationPropertiesEXT::safe_VkPhysicalDeviceLineRasterizationPropertiesEXT(
-    const safe_VkPhysicalDeviceLineRasterizationPropertiesEXT& copy_src) {
-    sType = copy_src.sType;
-    lineSubPixelPrecisionBits = copy_src.lineSubPixelPrecisionBits;
-    pNext = SafePnextCopy(copy_src.pNext);
-}
-
-safe_VkPhysicalDeviceLineRasterizationPropertiesEXT& safe_VkPhysicalDeviceLineRasterizationPropertiesEXT::operator=(
-    const safe_VkPhysicalDeviceLineRasterizationPropertiesEXT& copy_src) {
-    if (&copy_src == this) return *this;
-
-    FreePnextChain(pNext);
-
-    sType = copy_src.sType;
-    lineSubPixelPrecisionBits = copy_src.lineSubPixelPrecisionBits;
-    pNext = SafePnextCopy(copy_src.pNext);
-
-    return *this;
-}
-
-safe_VkPhysicalDeviceLineRasterizationPropertiesEXT::~safe_VkPhysicalDeviceLineRasterizationPropertiesEXT() {
-    FreePnextChain(pNext);
-}
-
-void safe_VkPhysicalDeviceLineRasterizationPropertiesEXT::initialize(
-    const VkPhysicalDeviceLineRasterizationPropertiesEXT* in_struct, [[maybe_unused]] PNextCopyState* copy_state) {
-    FreePnextChain(pNext);
-    sType = in_struct->sType;
-    lineSubPixelPrecisionBits = in_struct->lineSubPixelPrecisionBits;
-    pNext = SafePnextCopy(in_struct->pNext, copy_state);
-}
-
-void safe_VkPhysicalDeviceLineRasterizationPropertiesEXT::initialize(
-    const safe_VkPhysicalDeviceLineRasterizationPropertiesEXT* copy_src, [[maybe_unused]] PNextCopyState* copy_state) {
-    sType = copy_src->sType;
-    lineSubPixelPrecisionBits = copy_src->lineSubPixelPrecisionBits;
-    pNext = SafePnextCopy(copy_src->pNext);
-}
-
-safe_VkPipelineRasterizationLineStateCreateInfoEXT::safe_VkPipelineRasterizationLineStateCreateInfoEXT(
-    const VkPipelineRasterizationLineStateCreateInfoEXT* in_struct, [[maybe_unused]] PNextCopyState* copy_state, bool copy_pnext)
-    : sType(in_struct->sType),
-      lineRasterizationMode(in_struct->lineRasterizationMode),
-      stippledLineEnable(in_struct->stippledLineEnable),
-      lineStippleFactor(in_struct->lineStippleFactor),
-      lineStipplePattern(in_struct->lineStipplePattern) {
-    if (copy_pnext) {
-        pNext = SafePnextCopy(in_struct->pNext, copy_state);
-    }
-}
-
-safe_VkPipelineRasterizationLineStateCreateInfoEXT::safe_VkPipelineRasterizationLineStateCreateInfoEXT()
-    : sType(VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_LINE_STATE_CREATE_INFO_EXT),
-      pNext(nullptr),
-      lineRasterizationMode(),
-      stippledLineEnable(),
-      lineStippleFactor(),
-      lineStipplePattern() {}
-
-safe_VkPipelineRasterizationLineStateCreateInfoEXT::safe_VkPipelineRasterizationLineStateCreateInfoEXT(
-    const safe_VkPipelineRasterizationLineStateCreateInfoEXT& copy_src) {
-    sType = copy_src.sType;
-    lineRasterizationMode = copy_src.lineRasterizationMode;
-    stippledLineEnable = copy_src.stippledLineEnable;
-    lineStippleFactor = copy_src.lineStippleFactor;
-    lineStipplePattern = copy_src.lineStipplePattern;
-    pNext = SafePnextCopy(copy_src.pNext);
-}
-
-safe_VkPipelineRasterizationLineStateCreateInfoEXT& safe_VkPipelineRasterizationLineStateCreateInfoEXT::operator=(
-    const safe_VkPipelineRasterizationLineStateCreateInfoEXT& copy_src) {
-    if (&copy_src == this) return *this;
-
-    FreePnextChain(pNext);
-
-    sType = copy_src.sType;
-    lineRasterizationMode = copy_src.lineRasterizationMode;
-    stippledLineEnable = copy_src.stippledLineEnable;
-    lineStippleFactor = copy_src.lineStippleFactor;
-    lineStipplePattern = copy_src.lineStipplePattern;
-    pNext = SafePnextCopy(copy_src.pNext);
-
-    return *this;
-}
-
-safe_VkPipelineRasterizationLineStateCreateInfoEXT::~safe_VkPipelineRasterizationLineStateCreateInfoEXT() { FreePnextChain(pNext); }
-
-void safe_VkPipelineRasterizationLineStateCreateInfoEXT::initialize(const VkPipelineRasterizationLineStateCreateInfoEXT* in_struct,
-                                                                    [[maybe_unused]] PNextCopyState* copy_state) {
-    FreePnextChain(pNext);
-    sType = in_struct->sType;
-    lineRasterizationMode = in_struct->lineRasterizationMode;
-    stippledLineEnable = in_struct->stippledLineEnable;
-    lineStippleFactor = in_struct->lineStippleFactor;
-    lineStipplePattern = in_struct->lineStipplePattern;
-    pNext = SafePnextCopy(in_struct->pNext, copy_state);
-}
-
-void safe_VkPipelineRasterizationLineStateCreateInfoEXT::initialize(
-    const safe_VkPipelineRasterizationLineStateCreateInfoEXT* copy_src, [[maybe_unused]] PNextCopyState* copy_state) {
-    sType = copy_src->sType;
-    lineRasterizationMode = copy_src->lineRasterizationMode;
-    stippledLineEnable = copy_src->stippledLineEnable;
-    lineStippleFactor = copy_src->lineStippleFactor;
-    lineStipplePattern = copy_src->lineStipplePattern;
-    pNext = SafePnextCopy(copy_src->pNext);
-}
-
 safe_VkPhysicalDeviceShaderAtomicFloatFeaturesEXT::safe_VkPhysicalDeviceShaderAtomicFloatFeaturesEXT(
     const VkPhysicalDeviceShaderAtomicFloatFeaturesEXT* in_struct, [[maybe_unused]] PNextCopyState* copy_state, bool copy_pnext)
     : sType(in_struct->sType),
@@ -5691,54 +5491,6 @@ void safe_VkPhysicalDeviceShaderAtomicFloatFeaturesEXT::initialize(
     shaderImageFloat32AtomicAdd = copy_src->shaderImageFloat32AtomicAdd;
     sparseImageFloat32Atomics = copy_src->sparseImageFloat32Atomics;
     sparseImageFloat32AtomicAdd = copy_src->sparseImageFloat32AtomicAdd;
-    pNext = SafePnextCopy(copy_src->pNext);
-}
-
-safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT::safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT(
-    const VkPhysicalDeviceIndexTypeUint8FeaturesEXT* in_struct, [[maybe_unused]] PNextCopyState* copy_state, bool copy_pnext)
-    : sType(in_struct->sType), indexTypeUint8(in_struct->indexTypeUint8) {
-    if (copy_pnext) {
-        pNext = SafePnextCopy(in_struct->pNext, copy_state);
-    }
-}
-
-safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT::safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT()
-    : sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT), pNext(nullptr), indexTypeUint8() {}
-
-safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT::safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT(
-    const safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT& copy_src) {
-    sType = copy_src.sType;
-    indexTypeUint8 = copy_src.indexTypeUint8;
-    pNext = SafePnextCopy(copy_src.pNext);
-}
-
-safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT& safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT::operator=(
-    const safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT& copy_src) {
-    if (&copy_src == this) return *this;
-
-    FreePnextChain(pNext);
-
-    sType = copy_src.sType;
-    indexTypeUint8 = copy_src.indexTypeUint8;
-    pNext = SafePnextCopy(copy_src.pNext);
-
-    return *this;
-}
-
-safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT::~safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT() { FreePnextChain(pNext); }
-
-void safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT::initialize(const VkPhysicalDeviceIndexTypeUint8FeaturesEXT* in_struct,
-                                                                [[maybe_unused]] PNextCopyState* copy_state) {
-    FreePnextChain(pNext);
-    sType = in_struct->sType;
-    indexTypeUint8 = in_struct->indexTypeUint8;
-    pNext = SafePnextCopy(in_struct->pNext, copy_state);
-}
-
-void safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT::initialize(const safe_VkPhysicalDeviceIndexTypeUint8FeaturesEXT* copy_src,
-                                                                [[maybe_unused]] PNextCopyState* copy_state) {
-    sType = copy_src->sType;
-    indexTypeUint8 = copy_src->indexTypeUint8;
     pNext = SafePnextCopy(copy_src->pNext);
 }
 
@@ -6655,6 +6407,163 @@ void safe_VkHostImageCopyDevicePerformanceQueryEXT::initialize(const safe_VkHost
     sType = copy_src->sType;
     optimalDeviceAccess = copy_src->optimalDeviceAccess;
     identicalMemoryLayout = copy_src->identicalMemoryLayout;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
+safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT::safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT(
+    const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT* in_struct, [[maybe_unused]] PNextCopyState* copy_state, bool copy_pnext)
+    : sType(in_struct->sType),
+      memoryMapPlaced(in_struct->memoryMapPlaced),
+      memoryMapRangePlaced(in_struct->memoryMapRangePlaced),
+      memoryUnmapReserve(in_struct->memoryUnmapReserve) {
+    if (copy_pnext) {
+        pNext = SafePnextCopy(in_struct->pNext, copy_state);
+    }
+}
+
+safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT::safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT()
+    : sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_FEATURES_EXT),
+      pNext(nullptr),
+      memoryMapPlaced(),
+      memoryMapRangePlaced(),
+      memoryUnmapReserve() {}
+
+safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT::safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT(
+    const safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT& copy_src) {
+    sType = copy_src.sType;
+    memoryMapPlaced = copy_src.memoryMapPlaced;
+    memoryMapRangePlaced = copy_src.memoryMapRangePlaced;
+    memoryUnmapReserve = copy_src.memoryUnmapReserve;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT& safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT::operator=(
+    const safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT& copy_src) {
+    if (&copy_src == this) return *this;
+
+    FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    memoryMapPlaced = copy_src.memoryMapPlaced;
+    memoryMapRangePlaced = copy_src.memoryMapRangePlaced;
+    memoryUnmapReserve = copy_src.memoryUnmapReserve;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT::~safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT() { FreePnextChain(pNext); }
+
+void safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT::initialize(const VkPhysicalDeviceMapMemoryPlacedFeaturesEXT* in_struct,
+                                                                 [[maybe_unused]] PNextCopyState* copy_state) {
+    FreePnextChain(pNext);
+    sType = in_struct->sType;
+    memoryMapPlaced = in_struct->memoryMapPlaced;
+    memoryMapRangePlaced = in_struct->memoryMapRangePlaced;
+    memoryUnmapReserve = in_struct->memoryUnmapReserve;
+    pNext = SafePnextCopy(in_struct->pNext, copy_state);
+}
+
+void safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT::initialize(const safe_VkPhysicalDeviceMapMemoryPlacedFeaturesEXT* copy_src,
+                                                                 [[maybe_unused]] PNextCopyState* copy_state) {
+    sType = copy_src->sType;
+    memoryMapPlaced = copy_src->memoryMapPlaced;
+    memoryMapRangePlaced = copy_src->memoryMapRangePlaced;
+    memoryUnmapReserve = copy_src->memoryUnmapReserve;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
+safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT::safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT(
+    const VkPhysicalDeviceMapMemoryPlacedPropertiesEXT* in_struct, [[maybe_unused]] PNextCopyState* copy_state, bool copy_pnext)
+    : sType(in_struct->sType), minPlacedMemoryMapAlignment(in_struct->minPlacedMemoryMapAlignment) {
+    if (copy_pnext) {
+        pNext = SafePnextCopy(in_struct->pNext, copy_state);
+    }
+}
+
+safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT::safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT()
+    : sType(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAP_MEMORY_PLACED_PROPERTIES_EXT), pNext(nullptr), minPlacedMemoryMapAlignment() {}
+
+safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT::safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT(
+    const safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT& copy_src) {
+    sType = copy_src.sType;
+    minPlacedMemoryMapAlignment = copy_src.minPlacedMemoryMapAlignment;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT& safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT::operator=(
+    const safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT& copy_src) {
+    if (&copy_src == this) return *this;
+
+    FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    minPlacedMemoryMapAlignment = copy_src.minPlacedMemoryMapAlignment;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT::~safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT() { FreePnextChain(pNext); }
+
+void safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT::initialize(const VkPhysicalDeviceMapMemoryPlacedPropertiesEXT* in_struct,
+                                                                   [[maybe_unused]] PNextCopyState* copy_state) {
+    FreePnextChain(pNext);
+    sType = in_struct->sType;
+    minPlacedMemoryMapAlignment = in_struct->minPlacedMemoryMapAlignment;
+    pNext = SafePnextCopy(in_struct->pNext, copy_state);
+}
+
+void safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT::initialize(
+    const safe_VkPhysicalDeviceMapMemoryPlacedPropertiesEXT* copy_src, [[maybe_unused]] PNextCopyState* copy_state) {
+    sType = copy_src->sType;
+    minPlacedMemoryMapAlignment = copy_src->minPlacedMemoryMapAlignment;
+    pNext = SafePnextCopy(copy_src->pNext);
+}
+
+safe_VkMemoryMapPlacedInfoEXT::safe_VkMemoryMapPlacedInfoEXT(const VkMemoryMapPlacedInfoEXT* in_struct,
+                                                             [[maybe_unused]] PNextCopyState* copy_state, bool copy_pnext)
+    : sType(in_struct->sType), pPlacedAddress(in_struct->pPlacedAddress) {
+    if (copy_pnext) {
+        pNext = SafePnextCopy(in_struct->pNext, copy_state);
+    }
+}
+
+safe_VkMemoryMapPlacedInfoEXT::safe_VkMemoryMapPlacedInfoEXT()
+    : sType(VK_STRUCTURE_TYPE_MEMORY_MAP_PLACED_INFO_EXT), pNext(nullptr), pPlacedAddress(nullptr) {}
+
+safe_VkMemoryMapPlacedInfoEXT::safe_VkMemoryMapPlacedInfoEXT(const safe_VkMemoryMapPlacedInfoEXT& copy_src) {
+    sType = copy_src.sType;
+    pPlacedAddress = copy_src.pPlacedAddress;
+    pNext = SafePnextCopy(copy_src.pNext);
+}
+
+safe_VkMemoryMapPlacedInfoEXT& safe_VkMemoryMapPlacedInfoEXT::operator=(const safe_VkMemoryMapPlacedInfoEXT& copy_src) {
+    if (&copy_src == this) return *this;
+
+    FreePnextChain(pNext);
+
+    sType = copy_src.sType;
+    pPlacedAddress = copy_src.pPlacedAddress;
+    pNext = SafePnextCopy(copy_src.pNext);
+
+    return *this;
+}
+
+safe_VkMemoryMapPlacedInfoEXT::~safe_VkMemoryMapPlacedInfoEXT() { FreePnextChain(pNext); }
+
+void safe_VkMemoryMapPlacedInfoEXT::initialize(const VkMemoryMapPlacedInfoEXT* in_struct,
+                                               [[maybe_unused]] PNextCopyState* copy_state) {
+    FreePnextChain(pNext);
+    sType = in_struct->sType;
+    pPlacedAddress = in_struct->pPlacedAddress;
+    pNext = SafePnextCopy(in_struct->pNext, copy_state);
+}
+
+void safe_VkMemoryMapPlacedInfoEXT::initialize(const safe_VkMemoryMapPlacedInfoEXT* copy_src,
+                                               [[maybe_unused]] PNextCopyState* copy_state) {
+    sType = copy_src->sType;
+    pPlacedAddress = copy_src->pPlacedAddress;
     pNext = SafePnextCopy(copy_src->pNext);
 }
 

@@ -724,7 +724,9 @@ struct DeviceExtensions : public InstanceExtensions {
     ExtEnabled vk_qnx_external_memory_screen_buffer{kNotEnabled};
     ExtEnabled vk_msft_layered_driver{kNotEnabled};
     ExtEnabled vk_nv_descriptor_pool_overallocation{kNotEnabled};
+    ExtEnabled vk_nv_raw_access_chains{kNotEnabled};
     ExtEnabled vk_nv_shader_atomic_float16_vector{kNotEnabled};
+    ExtEnabled vk_nv_ray_tracing_validation{kNotEnabled};
     ExtEnabled vk_khr_acceleration_structure{kNotEnabled};
     ExtEnabled vk_khr_ray_tracing_pipeline{kNotEnabled};
     ExtEnabled vk_khr_ray_query{kNotEnabled};
@@ -1876,8 +1878,10 @@ struct DeviceExtensions : public InstanceExtensions {
             {VK_NV_DESCRIPTOR_POOL_OVERALLOCATION_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_nv_descriptor_pool_overallocation,
                         {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"}}})},
+            {VK_NV_RAW_ACCESS_CHAINS_EXTENSION_NAME, DeviceInfo(&DeviceExtensions::vk_nv_raw_access_chains, {})},
             {VK_NV_SHADER_ATOMIC_FLOAT16_VECTOR_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_nv_shader_atomic_float16_vector, {})},
+            {VK_NV_RAY_TRACING_VALIDATION_EXTENSION_NAME, DeviceInfo(&DeviceExtensions::vk_nv_ray_tracing_validation, {})},
             {VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
              DeviceInfo(&DeviceExtensions::vk_khr_acceleration_structure,
                         {{{&DeviceExtensions::vk_feature_version_1_1, "VK_VERSION_1_1"},
@@ -2330,7 +2334,9 @@ static const std::set<std::string> kDeviceExtensionNames = {
 #endif  // VK_USE_PLATFORM_SCREEN_QNX
     VK_MSFT_LAYERED_DRIVER_EXTENSION_NAME,
     VK_NV_DESCRIPTOR_POOL_OVERALLOCATION_EXTENSION_NAME,
+    VK_NV_RAW_ACCESS_CHAINS_EXTENSION_NAME,
     VK_NV_SHADER_ATOMIC_FLOAT16_VECTOR_EXTENSION_NAME,
+    VK_NV_RAY_TRACING_VALIDATION_EXTENSION_NAME,
     VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME,
     VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME,
     VK_KHR_RAY_QUERY_EXTENSION_NAME,

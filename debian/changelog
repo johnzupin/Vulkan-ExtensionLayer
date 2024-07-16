@@ -1,3 +1,36 @@
+vulkan-extensionlayer (1.3.290.0~rc1-1lunarg24.04-1) noble; urgency=medium
+
+  [ Jeremy Gebben ]
+  * build: Update SPIRV-Headers, -Tools and glslang to latest
+  * build: Update Vulkan-Headers and VUL to 1.3.284
+  * build: Update Vulkan-Headers and VUL to 1.3.285
+  * build: Update SPIRV-Tools and glslang to latest
+  * build: Update SPIRV-Tools, glslang and volk to latest
+  * build: Update Vulkan-Headers and VUL to 1.3.286
+  * build: Update SPIRV-Tools, -Headers and glslang to latest
+  * build: Update Vulkan-Headers and V-U-L to 1.3.287
+
+  [ ziga-lunarg ]
+  * shaderObject: Add support for unused attachments
+  * tests: Test shader objects with unused attachments
+  * shaderObject: Refactor files
+
+  [ John Zupin ]
+  * tests: Update android targetSdkVersion from 26 to 33
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and VUL to 1.3.288
+  * build: Update Vulkan-Headers and VEL to 1.3.289
+  * build: Update spirv dependencies
+
+  [ ziga-lunarg ]
+  * shaderObject: Add missing shader create dispatch base flag
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and VUL to 1.3.290
+
+ -- john <john@odin>  Tue, 16 Jul 2024 14:41:20 -0600
+
 vulkan-extensionlayer (1.3.283.0~rc1-1lunarg22.04-1) jammy; urgency=medium
 
   [ Jeremy Gebben ]

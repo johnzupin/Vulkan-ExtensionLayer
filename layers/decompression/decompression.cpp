@@ -34,6 +34,7 @@ static bool logging_enabled = false;
 #include "log.h"
 #include "vk_util.h"
 #include "decompression.h"
+#include "vk_common.h"
 
 #include "shaders/spirv/copyCount_vk.h"
 
@@ -83,12 +84,12 @@ static const ByteCode kGInflateBytecode[] = {
     {(const uint8_t*)kGInflate64_HAVE_INT16, sizeof(kGInflate64_HAVE_INT16)},
 
     {(const uint8_t*)kGInflate8_HAVE_INT64, sizeof(kGInflate8_HAVE_INT64)},
-    {(const uint8_t*)kGInflate64_HAVE_INT64, sizeof(kGInflate64_HAVE_INT64)},
+    {(const uint8_t*)kGInflate16_HAVE_INT64, sizeof(kGInflate16_HAVE_INT64)},
     {(const uint8_t*)kGInflate32_HAVE_INT64, sizeof(kGInflate32_HAVE_INT64)},
     {(const uint8_t*)kGInflate64_HAVE_INT64, sizeof(kGInflate64_HAVE_INT64)},
 
     {(const uint8_t*)kGInflate8_HAVE_INT16_HAVE_INT64, sizeof(kGInflate8_HAVE_INT16_HAVE_INT64)},
-    {(const uint8_t*)kGInflate64_HAVE_INT16_HAVE_INT64, sizeof(kGInflate64_HAVE_INT16_HAVE_INT64)},
+    {(const uint8_t*)kGInflate16_HAVE_INT16_HAVE_INT64, sizeof(kGInflate16_HAVE_INT16_HAVE_INT64)},
     {(const uint8_t*)kGInflate32_HAVE_INT16_HAVE_INT64, sizeof(kGInflate32_HAVE_INT16_HAVE_INT64)},
     {(const uint8_t*)kGInflate64_HAVE_INT16_HAVE_INT64, sizeof(kGInflate64_HAVE_INT16_HAVE_INT64)},
 };
@@ -105,12 +106,12 @@ static const ByteCode kIndirectGInflateBytecode[] = {
     {(const uint8_t*)kIndirectGInflate64_HAVE_INT16, sizeof(kIndirectGInflate64_HAVE_INT16)},
 
     {(const uint8_t*)kIndirectGInflate8_HAVE_INT64, sizeof(kIndirectGInflate8_HAVE_INT64)},
-    {(const uint8_t*)kIndirectGInflate64_HAVE_INT64, sizeof(kIndirectGInflate64_HAVE_INT64)},
+    {(const uint8_t*)kIndirectGInflate16_HAVE_INT64, sizeof(kIndirectGInflate16_HAVE_INT64)},
     {(const uint8_t*)kIndirectGInflate32_HAVE_INT64, sizeof(kIndirectGInflate32_HAVE_INT64)},
     {(const uint8_t*)kIndirectGInflate64_HAVE_INT64, sizeof(kIndirectGInflate64_HAVE_INT64)},
 
     {(const uint8_t*)kIndirectGInflate8_HAVE_INT16_HAVE_INT64, sizeof(kIndirectGInflate8_HAVE_INT16_HAVE_INT64)},
-    {(const uint8_t*)kIndirectGInflate64_HAVE_INT16_HAVE_INT64, sizeof(kIndirectGInflate64_HAVE_INT16_HAVE_INT64)},
+    {(const uint8_t*)kIndirectGInflate16_HAVE_INT16_HAVE_INT64, sizeof(kIndirectGInflate16_HAVE_INT16_HAVE_INT64)},
     {(const uint8_t*)kIndirectGInflate32_HAVE_INT16_HAVE_INT64, sizeof(kIndirectGInflate32_HAVE_INT16_HAVE_INT64)},
     {(const uint8_t*)kIndirectGInflate64_HAVE_INT16_HAVE_INT64, sizeof(kIndirectGInflate64_HAVE_INT16_HAVE_INT64)},
 };
@@ -127,6 +128,11 @@ static const VkLayerProperties kGlobalLayer = {
     1,
     "Default memory decompression layer",
 };
+
+// Instance extensions that this layer provides:
+const VkExtensionProperties kInstanceExtensionProperties[] = {
+    VkExtensionProperties{VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, VK_EXT_LAYER_SETTINGS_SPEC_VERSION}};
+const uint32_t kInstanceExtensionPropertiesCount = static_cast<uint32_t>(std::size(kInstanceExtensionProperties));
 
 static const VkExtensionProperties kDeviceExtension = {VK_NV_MEMORY_DECOMPRESSION_EXTENSION_NAME,
                                                        VK_NV_MEMORY_DECOMPRESSION_SPEC_VERSION};
@@ -226,6 +232,7 @@ InstanceData::InstanceData(VkInstance inst, PFN_vkGetInstanceProcAddr gpa, const
     INIT_HOOK(vtable, instance, CreateDevice);
     INIT_HOOK(vtable, instance, EnumeratePhysicalDevices);
     INIT_HOOK(vtable, instance, EnumerateDeviceExtensionProperties);
+    INIT_HOOK(vtable, instance, EnumerateInstanceExtensionProperties);
     INIT_HOOK(vtable, instance, GetPhysicalDeviceProperties2);
     INIT_HOOK(vtable, instance, GetPhysicalDeviceFeatures2);
     INIT_HOOK(vtable, instance, GetPhysicalDeviceProperties);
@@ -276,7 +283,7 @@ void InitLayerSettings(const VkInstanceCreateInfo* pCreateInfo, const VkAllocati
     }
 
     if (vkuHasLayerSetting(layer_setting_set, kLayerSettingsCustomSTypeInfo)) {
-        vkuGetLayerSettingValues(layer_setting_set, kLayerSettingsCustomSTypeInfo, vku::custom_stype_info);
+        vkuGetLayerSettingValues(layer_setting_set, kLayerSettingsCustomSTypeInfo, vku::GetCustomStypeInfo());
     }
 
     vkuDestroyLayerSettingSet(layer_setting_set, pAllocator);
@@ -979,9 +986,8 @@ extern "C" VEL_EXPORT VKAPI_ATTR VkResult VKAPI_CALL vkEnumerateInstanceExtensio
                                                                                             uint32_t* pPropertyCount,
                                                                                             VkExtensionProperties* pProperties) {
     if (pLayerName && strncmp(pLayerName, memory_decompression::kGlobalLayer.layerName, VK_MAX_EXTENSION_NAME_SIZE) == 0) {
-        // VK_NV_memory_decompression is a device extension and don't want to have it labeled as both instance and device extension
-        *pPropertyCount = 0;
-        return VK_SUCCESS;
+        return EnumerateProperties(memory_decompression::kInstanceExtensionPropertiesCount,
+                                   memory_decompression::kInstanceExtensionProperties, pPropertyCount, pProperties);
     }
     return VK_ERROR_LAYER_NOT_PRESENT;
 }

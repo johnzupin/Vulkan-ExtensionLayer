@@ -36,10 +36,13 @@
 
 #include "log.h"
 #include "vk_api_hash.h"
+#include "vk_util.h"
+#include "vk_common.h"
 
 #include "shader_object/shader_object_structs.h"
 
 #define kLayerSettingsForceEnable "force_enable"
+#define kLayerSettingsDisablePipelinePreCaching "disable_pipeline_pre_caching"
 #define kLayerSettingsCustomSTypeInfo "custom_stype_list"
 
 #define SHADER_OBJECT_BINARY_VERSION 1
@@ -81,6 +84,11 @@ namespace shader_object {
 static const char* kLayerName = "VK_LAYER_KHRONOS_shader_object";
 static const VkExtensionProperties kExtensionProperties = {VK_EXT_SHADER_OBJECT_EXTENSION_NAME, VK_EXT_SHADER_OBJECT_SPEC_VERSION};
 
+// Instance extensions that this layer provides:
+const VkExtensionProperties kInstanceExtensionProperties[] = {
+    VkExtensionProperties{VK_EXT_LAYER_SETTINGS_EXTENSION_NAME, VK_EXT_LAYER_SETTINGS_SPEC_VERSION}};
+const uint32_t kInstanceExtensionPropertiesCount = static_cast<uint32_t>(std::size(kInstanceExtensionProperties));
+
 template <typename T>
 T* AllocateArray(VkAllocationCallbacks const& allocator, uint32_t count, VkSystemAllocationScope scope) {
     return static_cast<T*>(allocator.pfnAllocation(allocator.pUserData, sizeof(T) * count, alignof(T), scope));
@@ -109,6 +117,8 @@ struct LayerDispatchInstance {
 #define ENTRY_POINT_ALIAS(alias, canon)
     ENTRY_POINTS_INSTANCE
     ADDITIONAL_INSTANCE_FUNCTIONS
+    ENTRY_POINTS_DEVICE
+    ADDITIONAL_DEVICE_FUNCTIONS
 #undef ENTRY_POINT_ALIAS
 #undef ENTRY_POINT
 
@@ -117,6 +127,8 @@ struct LayerDispatchInstance {
 #define ENTRY_POINT(name) ENTRY_POINT_ALIAS(name, name)
         ENTRY_POINTS_INSTANCE
         ADDITIONAL_INSTANCE_FUNCTIONS
+        ENTRY_POINTS_DEVICE
+        ADDITIONAL_DEVICE_FUNCTIONS
 #undef ENTRY_POINT
 #undef ENTRY_POINT_ALIAS
     }
@@ -156,6 +168,7 @@ namespace shader_object {
 
 struct LayerSettings {
     bool force_enable{false};
+    bool disable_pipeline_pre_caching{false};
 };
 
 struct InstanceData {
@@ -626,6 +639,160 @@ static void RemoveCommandBufferDataForCommandBuffer(DeviceData* device_data, VkC
     }
 }
 
+static const char* GetShaderName(uint32_t shader_type) {
+    switch (shader_type) {
+        case VERTEX_SHADER:
+            return "V";
+        case FRAGMENT_SHADER:
+            return "F";
+        case TESSELLATION_CONTROL_SHADER:
+            return "TC";
+        case TESSELLATION_EVALUATION_SHADER:
+            return "TE";
+        case GEOMETRY_SHADER:
+            return "G";
+        case MESH_SHADER:
+            return "M";
+        case TASK_SHADER:
+            return "T";
+        default:
+            break;
+    }
+    return "";
+}
+
+static void SetComputeShaderDebugUtilsName(DeviceData& data, Shader* shader, const VkDebugUtilsObjectNameInfoEXT *pNameInfo) {
+    VkDebugUtilsObjectNameInfoEXT name_info{
+        VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+        nullptr,
+        VK_OBJECT_TYPE_PIPELINE,
+        (uint64_t)shader->partial_pipeline.pipeline,
+        pNameInfo->pObjectName
+    };
+    data.vtable.SetDebugUtilsObjectNameEXT(data.device, &name_info);
+}
+
+static void SetComputeShaderDebugUtilsTag(DeviceData& data, Shader* shader, const VkDebugUtilsObjectTagInfoEXT* pTagInfo) {
+    VkDebugUtilsObjectTagInfoEXT tag_info{
+        VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT,
+        nullptr,
+        VK_OBJECT_TYPE_PIPELINE,
+        (uint64_t)shader->partial_pipeline.pipeline,
+        pTagInfo->tagName,
+        pTagInfo->tagSize,
+        pTagInfo->pTag
+    };
+    data.vtable.SetDebugUtilsObjectTagEXT(data.device, &tag_info);
+}
+
+static void SetDebugUtilsNameAndTag(CommandBufferData& cmd_data, VkPipeline pipeline) {
+    auto& device_data = *cmd_data.device_data;
+    auto const state  = cmd_data.GetDrawStateData();
+
+    if (device_data.debug_utils_object_name_map.NumEntries() > 0) {
+        bool first_shader = true;
+        bool same_name = true;
+        char same_shader_name[SHADER_OBJECT_DEBUG_UTILS_STR_LENGTH];
+        char pipeline_name[SHADER_OBJECT_DEBUG_UTILS_STR_LENGTH* 5 + 26];
+        pipeline_name[0] = '\0';
+        char temp[SHADER_OBJECT_DEBUG_UTILS_STR_LENGTH + 5];
+
+        for (uint32_t shader_type = 0; shader_type < NUM_SHADERS; ++shader_type) {
+            Shader* shader = state->GetComparableShader(shader_type).GetShaderPtr();
+
+            if (shader == nullptr) {
+                continue;
+            }
+
+            auto iter = device_data.debug_utils_object_name_map.Find(shader);
+            if (iter != device_data.debug_utils_object_name_map.end()) {
+                const auto& shader_name = iter.GetValue().name;
+                if (first_shader) {
+                    first_shader = false;
+                    strncpy(same_shader_name, shader_name, sizeof(same_shader_name));
+                } else if (strncmp(shader_name, same_shader_name, sizeof(shader_name)) == 0) {
+                    same_name = false;
+                    strncat(pipeline_name, "/", sizeof(pipeline_name) - strlen(pipeline_name) - 1);
+                }
+
+                bool has_space_or_slash = strchr(shader_name, ' ') != NULL || strchr(shader_name, '/') != NULL;
+                if (has_space_or_slash) {
+                    snprintf(temp, sizeof(temp), "%s:\"%s\"", GetShaderName(shader_type), shader_name);
+                } else {
+                    snprintf(temp, sizeof(temp), "%s:%s", GetShaderName(shader_type), shader_name);
+                }
+                strncat(pipeline_name, temp, sizeof(pipeline_name) - strlen(pipeline_name) - 1);
+                pipeline_name[sizeof(pipeline_name) - 1] = '\0';
+            }
+        }
+
+        if (!first_shader) {
+            VkDebugUtilsObjectNameInfoEXT name_info{
+                VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+                nullptr,
+                VK_OBJECT_TYPE_PIPELINE,
+                (uint64_t)pipeline,
+                same_name ? same_shader_name : pipeline_name
+            };
+            device_data.vtable.SetDebugUtilsObjectNameEXT(device_data.device, &name_info);
+        }
+    }
+    if (device_data.debug_utils_object_tag_map.NumEntries() > 0) {
+        bool first_shader = true;
+        bool same_tag = true;
+        char same_shader_tag[SHADER_OBJECT_DEBUG_UTILS_STR_LENGTH];
+        char pipeline_tag[SHADER_OBJECT_DEBUG_UTILS_STR_LENGTH * 5 + 26];
+        pipeline_tag[0] = '\0';
+        char temp[SHADER_OBJECT_DEBUG_UTILS_STR_LENGTH + 5];
+        uint64_t tagName = 0;
+
+        for (uint32_t shader_type = 0; shader_type < NUM_SHADERS; ++shader_type) {
+            Shader* shader = state->GetComparableShader(shader_type).GetShaderPtr();
+
+            if (shader == nullptr) {
+                continue;
+            }
+
+            auto iter = device_data.debug_utils_object_tag_map.Find(shader);
+            if (iter != device_data.debug_utils_object_tag_map.end()) {
+                const auto& shader_tag = iter.GetValue().tag;
+                if (first_shader) {
+                    first_shader = false;
+                    strncpy(same_shader_tag, shader_tag, sizeof(same_shader_tag));
+                } else if (shader_tag != same_shader_tag) {
+                    same_tag = false;
+                    strncat(pipeline_tag, "/", sizeof(pipeline_tag) - strlen(pipeline_tag) - 1);
+                }
+
+                if (shader_type == VERTEX_SHADER || shader_type == MESH_SHADER) {
+                    tagName = iter.GetValue().tagName;
+                }
+
+                bool has_space_or_slash = strchr(shader_tag, ' ') != NULL || strchr(shader_tag, '/') != NULL;
+                if (has_space_or_slash) {
+                    snprintf(temp, sizeof(temp), "%s:\"%s\"", GetShaderName(shader_type), shader_tag);
+                } else {
+                    snprintf(temp, sizeof(temp), "%s:%s", GetShaderName(shader_type), shader_tag);
+                }
+                strncat(pipeline_tag, temp, sizeof(pipeline_tag) - strlen(pipeline_tag) - 1);
+                pipeline_tag[sizeof(pipeline_tag) - 1] = '\0';
+            }
+        }
+        if (!first_shader) {
+            VkDebugUtilsObjectTagInfoEXT tag_info{
+                VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT,
+                nullptr,
+                VK_OBJECT_TYPE_PIPELINE,
+                (uint64_t)pipeline,
+                tagName,
+                same_tag ? strlen(same_shader_tag) : strlen(pipeline_tag),
+                same_tag ? same_shader_tag : pipeline_tag
+            };
+            device_data.vtable.SetDebugUtilsObjectTagEXT(device_data.device, &tag_info);
+        }
+    }
+}
+
 static VkPipeline CreateGraphicsPipelineForCommandBufferState(CommandBufferData& cmd_data) {
     auto& device_data = *cmd_data.device_data;
     auto const state  = cmd_data.GetDrawStateData();
@@ -1013,6 +1180,8 @@ static VkPipeline CreateGraphicsPipelineForCommandBufferState(CommandBufferData&
     ASSERT(result == VK_SUCCESS);
     UNUSED(result);
 
+    SetDebugUtilsNameAndTag(cmd_data, pipeline);
+
     return pipeline;
 }
 
@@ -1249,7 +1418,7 @@ PartialPipeline CreatePartiallyCompiledPipeline(DeviceData const& deviceData, Vk
         VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO, 
         nullptr,
         0, 
-        0
+        1
     };
     VkPipelineMultisampleStateCreateInfo multisample_state{
         VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
@@ -1306,7 +1475,6 @@ PartialPipeline CreatePartiallyCompiledPipeline(DeviceData const& deviceData, Vk
         partial_pipeline.draw_state->SetDepthBiasEnable(rasterization_state.depthBiasEnable);
 
         create_info.pTessellationState = &tessellation_state;
-        tessellation_state.patchControlPoints = 1u;
         partial_pipeline.draw_state->SetPatchControlPoints(tessellation_state.patchControlPoints);
     }
 
@@ -1342,6 +1510,9 @@ PartialPipeline CreatePartiallyCompiledPipeline(DeviceData const& deviceData, Vk
 }
 
 static VkResult PopulateCachesForShaders(DeviceData const& deviceData, VkAllocationCallbacks const& allocator, bool are_graphics_shaders_linked, uint32_t shaderCount, VkShaderEXT* pShaders) {
+    if (deviceData.flags & DeviceData::DISABLE_PIPELINE_PRE_CACHING) {
+        return VK_SUCCESS;
+    }
     if (deviceData.graphics_pipeline_library.graphicsPipelineLibrary == VK_TRUE) {
         // Compile partial pipelines to fill cache and to keep around for first draw pipeline creation
 
@@ -1579,7 +1750,7 @@ void InitLayerSettings(const VkInstanceCreateInfo* pCreateInfo, const VkAllocati
     VkuLayerSettingSet layer_setting_set = VK_NULL_HANDLE;
     vkuCreateLayerSettingSet(kLayerName, create_info, pAllocator, nullptr, &layer_setting_set);
 
-    static const char* setting_names[] = {kLayerSettingsForceEnable, kLayerSettingsCustomSTypeInfo};
+    static const char* setting_names[] = {kLayerSettingsForceEnable, kLayerSettingsDisablePipelinePreCaching, kLayerSettingsCustomSTypeInfo};
     uint32_t setting_name_count = static_cast<uint32_t>(std::size(setting_names));
 
     uint32_t unknown_setting_count = 0;
@@ -1600,8 +1771,12 @@ void InitLayerSettings(const VkInstanceCreateInfo* pCreateInfo, const VkAllocati
         vkuGetLayerSettingValue(layer_setting_set, kLayerSettingsForceEnable, layer_settings->force_enable);
     }
 
+    if (vkuHasLayerSetting(layer_setting_set, kLayerSettingsDisablePipelinePreCaching)) {
+        vkuGetLayerSettingValue(layer_setting_set, kLayerSettingsDisablePipelinePreCaching, layer_settings->disable_pipeline_pre_caching);
+    }
+
     if (vkuHasLayerSetting(layer_setting_set, kLayerSettingsCustomSTypeInfo)) {
-        vkuGetLayerSettingValues(layer_setting_set, kLayerSettingsCustomSTypeInfo, vku::custom_stype_info);
+        vkuGetLayerSettingValues(layer_setting_set, kLayerSettingsCustomSTypeInfo, vku::GetCustomStypeInfo());
     }
 
     vkuDestroyLayerSettingSet(layer_setting_set, pAllocator);
@@ -1833,6 +2008,9 @@ static VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysi
     }
     if (has_native_shader_object) {
         if (pProperties) {
+            if (count < *pPropertyCount) {
+                *pPropertyCount = count;
+            }
             memcpy(pProperties, all_properties, *pPropertyCount * sizeof(VkExtensionProperties));
         } else {
             *pPropertyCount = count;
@@ -1873,6 +2051,15 @@ static VKAPI_ATTR VkResult VKAPI_CALL EnumerateDeviceExtensionProperties(VkPhysi
     *pPropertyCount = write_index;
     kDefaultAllocator.pfnFree(nullptr, all_properties);
     return VK_SUCCESS;
+}
+
+static VKAPI_ATTR VkResult VKAPI_CALL EnumerateInstanceExtensionProperties(const char* pLayerName, uint32_t* pPropertyCount,
+                                                                    VkExtensionProperties* pProperties) {
+    if (pLayerName && strncmp(pLayerName, shader_object::kLayerName, VK_MAX_EXTENSION_NAME_SIZE) == 0) {
+        return EnumerateProperties(shader_object::kInstanceExtensionPropertiesCount,
+                                   shader_object::kInstanceExtensionProperties, pPropertyCount, pProperties);
+    }
+    return VK_ERROR_LAYER_NOT_PRESENT;
 }
 
 static VKAPI_ATTR VkResult VKAPI_CALL CreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo* pCreateInfo,
@@ -2019,7 +2206,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateDevice(VkPhysicalDevice physicalDevi
 #include "generated/shader_object_create_device_feature_structs.inl"
         device_features.pNext = appended_features_chain;
         instance_vtable.GetPhysicalDeviceFeatures2(physicalDevice, &device_features);
-        if (dynamic_rendering_ptr->dynamicRendering == VK_FALSE) {
+        if ((!vulkan_1_3_ptr || vulkan_1_3_ptr->dynamicRendering == VK_FALSE) && (!dynamic_rendering_ptr || dynamic_rendering_ptr->dynamicRendering == VK_FALSE)) {
             // Dynamic rendering is required
             vku::FreePnextChain(device_next_chain);
             allocator.pfnFree(allocator.pUserData, enabled_extension_names);
@@ -2049,7 +2236,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateDevice(VkPhysicalDevice physicalDevi
         };
 
         // Append to deep-copied pNext chain
-        if (private_data_ptr->privateData == VK_TRUE) {
+        if ((vulkan_1_3_ptr && vulkan_1_3_ptr->privateData == VK_TRUE) || (private_data_ptr && private_data_ptr->privateData == VK_TRUE)) {
             last->pNext = reinterpret_cast<VkBaseOutStructure*>(&reserved_private_data_slot);
         } else {
             last->pNext = appended_features_chain;
@@ -2086,6 +2273,9 @@ static VKAPI_ATTR VkResult VKAPI_CALL CreateDevice(VkPhysicalDevice physicalDevi
         // Fill in device data
         device_data->device                           = *pDevice;
         device_data->flags                            = enable_layer ? DeviceData::SHADER_OBJECT_LAYER_ENABLED : 0; 
+        if (instance_data->layer_settings.disable_pipeline_pre_caching) {
+            device_data->flags |= DeviceData::DISABLE_PIPELINE_PRE_CACHING;
+        }
         device_data->reserved_private_data_slot_count = total_private_data_slot_request_count;
         device_data->enabled_extensions               = enabled_additional_extensions;
 
@@ -2377,6 +2567,7 @@ static VKAPI_ATTR VkResult VKAPI_CALL GetShaderBinaryDataEXT(VkDevice device, Vk
     }
 
     if (*pDataSize < binary_size) {
+        *pDataSize = 0;
         return VK_INCOMPLETE;
     }
 
@@ -3162,6 +3353,50 @@ static VKAPI_ATTR void DestroyDescriptorUpdateTemplate(VkDevice device, VkDescri
     RemoveDescriptorUpdateTemplateBindPoint(device_data, descriptorUpdateTemplate);
 }
 
+static VKAPI_ATTR VkResult VKAPI_CALL SetDebugUtilsObjectNameEXT(VkDevice device, const VkDebugUtilsObjectNameInfoEXT *pNameInfo) {
+    DeviceData& data = *device_data_map.Get(device);
+    VkResult result = VK_SUCCESS;
+    if (pNameInfo->objectType == VK_OBJECT_TYPE_SHADER_EXT) {
+        const auto shader = reinterpret_cast<Shader*>(pNameInfo->objectHandle);
+        if (shader->stage == VK_SHADER_STAGE_COMPUTE_BIT) {
+            SetComputeShaderDebugUtilsName(data, shader, pNameInfo);
+        } else {
+            if (pNameInfo->pObjectName) {
+                DeviceData::NameInfo objectName;
+                strncpy(objectName.name, pNameInfo->pObjectName, sizeof(objectName.name) - 1);
+                objectName.name[sizeof(objectName.name) - 1] = '\0';
+                data.debug_utils_object_name_map.Add(shader, objectName);
+            } else {
+                data.debug_utils_object_name_map.Remove(shader);
+            }
+        }
+    } else {
+        result = data.vtable.SetDebugUtilsObjectNameEXT(device, pNameInfo);
+    }
+    return result;
+}
+
+static VKAPI_ATTR VkResult VKAPI_CALL SetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsObjectTagInfoEXT* pTagInfo) {
+    DeviceData& data = *device_data_map.Get(device);
+    VkResult result = VK_SUCCESS;
+    if (pTagInfo->objectType == VK_OBJECT_TYPE_SHADER_EXT) {
+        const auto shader = reinterpret_cast<Shader*>(pTagInfo->objectHandle);
+        if (shader->stage == VK_SHADER_STAGE_COMPUTE_BIT) {
+            SetComputeShaderDebugUtilsTag(data, shader, pTagInfo);
+        } else {
+            DeviceData::TagInfo tagInfo;
+            tagInfo.tagName = pTagInfo->tagName;
+            size_t copySize = pTagInfo->tagSize < sizeof(tagInfo.tag) ? pTagInfo->tagSize : sizeof(tagInfo.tag) - 1;
+            memcpy(tagInfo.tag, pTagInfo->pTag, copySize);
+            tagInfo.tag[copySize] = '\0';
+            data.debug_utils_object_tag_map.Add(shader, tagInfo);
+        }
+    } else {
+        result = data.vtable.SetDebugUtilsObjectTagEXT(device, pTagInfo);
+    }
+    return result;
+}
+
 static VKAPI_ATTR void VKAPI_CALL FakeCmdSetColorBlendAdvancedEXT(VkCommandBuffer, uint32_t, uint32_t, const VkColorBlendAdvancedEXT*) {}
 
 // Get Proc Addr
@@ -3173,13 +3408,12 @@ struct NameAndFunction {
 
 #define ENTRY_POINT_ALIAS(alias, canon) {"vk" #alias, (void*)shader_object::canon},
 #define ENTRY_POINT(name) ENTRY_POINT_ALIAS(name, name)
-static const NameAndFunction kFunctionMapInstance[] = {ENTRY_POINTS_INSTANCE};
+static const NameAndFunction kFunctionMapInstance[] = {ENTRY_POINTS_INSTANCE ENTRY_POINTS_DEVICE};
 static const NameAndFunction kFunctionMapDevice[] = {ENTRY_POINTS_DEVICE};
-static const NameAndFunction kFunctionMapAll[] = {ENTRY_POINTS_INSTANCE ENTRY_POINTS_DEVICE};
 #undef ENTRY_POINT
 #undef ENTRY_POINT_ALIAS
 
-enum FunctionType { kInstanceFunctions = 0x1, kDeviceFunctions = 0x2, kAllFunctions = kInstanceFunctions | kDeviceFunctions };
+enum FunctionType { kInstanceFunctions = 0x1, kDeviceFunctions = 0x2 };
 
 static void* FindFunctionByName(const char* pName, uint32_t functionType) {
     size_t num_elements = 0;
@@ -3193,7 +3427,6 @@ static void* FindFunctionByName(const char* pName, uint32_t functionType) {
 
     HANDLE_FUNCTION_TYPE(Instance);
     HANDLE_FUNCTION_TYPE(Device);
-    HANDLE_FUNCTION_TYPE(All);
 
 #undef HANDLE_FUNCTION_TYPE
 

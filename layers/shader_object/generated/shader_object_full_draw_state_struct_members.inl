@@ -2,7 +2,7 @@
 // See shader_object_generator.py for modifications
 
 /*
- * Copyright 2023 Nintendo
+ * Copyright 2023-2024 Nintendo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,7 +223,7 @@ private:
     VkBool32 primitive_restart_enable_{};
     VkBool32 rasterizer_discard_enable_{};
     VkBool32 depth_bias_enable_{};
-    uint32_t patch_control_points_{};
+    uint32_t patch_control_points_ = 1;
     VkPolygonMode polygon_mode_{};
     VkSampleCountFlagBits rasterization_samples_{};
     VkBool32 logic_op_enable_{};

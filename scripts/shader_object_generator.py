@@ -1,4 +1,4 @@
-# Copyright 2023 Nintendo
+# Copyright 2023-2024 Nintendo
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ def create_generated_file(filename):
 // See shader_object_generator.py for modifications
 
 /*
- * Copyright 2023 Nintendo
+ * Copyright 2023-2024 Nintendo
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,6 +189,7 @@ def generate_create_device_feature_structs(data):
 
     out_file.write('VkBaseOutStructure* appended_features_chain = nullptr;\n')
     out_file.write('VkBaseOutStructure* appended_features_chain_last = nullptr;\n\n')
+    out_file.write('auto vulkan_1_3_ptr = reinterpret_cast<VkPhysicalDeviceVulkan13Features*>(FindStructureInChain(device_next_chain, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES));\n\n')
 
     # Performance could be improved, this is a naive implementation
 
@@ -201,9 +202,10 @@ def generate_create_device_feature_structs(data):
         enum_name = extension['name']
         var_name = extension['name'].lower()
         initializer = '{' + extension['feature_struct_stype'] + '}'
+        promoted_struct = f'vulkan_{extension['promoted_to']}_ptr == nullptr && ' if 'promoted_to' in extension else ''
         out_file.write(f'auto {var_name}_ptr = reinterpret_cast<{struct_name}*>(FindStructureInChain(device_next_chain, {sType}));\n')
         out_file.write(f'{struct_name} {var_name}_local{initializer};\n')
-        out_file.write(f'if ({var_name}_ptr == nullptr && (physical_device_data->supported_additional_extensions & {enum_name}) != 0) {{\n')
+        out_file.write(f'if ({promoted_struct}{var_name}_ptr == nullptr && (physical_device_data->supported_additional_extensions & {enum_name}) != 0) {{\n')
         out_file.write(f'    {var_name}_ptr = &{var_name}_local;\n')
         out_file.write(f'    if (appended_features_chain_last == nullptr) {{\n')
         out_file.write(f'        appended_features_chain = (VkBaseOutStructure*){var_name}_ptr;\n')
@@ -336,7 +338,11 @@ def generate_full_draw_state_struct_members(data):
             generate_getter_and_setter(variable_state_group, variable_data['name'], var_name_private, var_type, length)
         else:
             # value member
-            member_variables_section.append(f'{var_type} {var_name_private}{{}};\n')
+            if var_name_private == "patch_control_points_":
+                member_variables_section.append(f'{var_type} {var_name_private} = 1;\n')
+            else:
+                member_variables_section.append(f'{var_type} {var_name_private}{{}};\n')
+
             if var_type == 'VkFormat':
                 comparison_code.append(f'if (!(o.{var_name_private} == {var_name_private}) && (!o.dynamic_rendering_unused_attachments_ || o.{var_name_private} != VK_FORMAT_UNDEFINED) && (!dynamic_rendering_unused_attachments_ || {var_name_private} != VK_FORMAT_UNDEFINED)) {{\n')
             elif var_name_private == 'num_color_attachments_':

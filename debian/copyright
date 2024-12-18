@@ -6,50 +6,65 @@ Files: *
 Copyright: 2015-2021, LunarG, Inc
            2021, The Khronos Group Inc
            2015, Valve Corporation
-           after any existing copyrights
-           included
 License: Apache-2.0
 
 Files: .github/*
        CMakeLists.txt
        LICENSE
-       build-android/build_all.sh
-       build-android/install_all.sh
-       build-android/jni/Android.mk
-       build-android/jni/Application.mk
-       build-android/res/*
-       build-android/test_APK.sh
-       build-android/update_external_sources_android.bat
-       build-android/update_external_sources_android.sh
        layers/CMakeLists.txt
+       layers/VkLayer_khronos_memory_decompression.def
+       layers/VkLayer_khronos_shader_object.def
        layers/VkLayer_khronos_synchronization2.def
        layers/VkLayer_khronos_timeline_semaphore.def
+       layers/decompression/decompression.cpp
+       layers/decompression/decompression.h
+       layers/decompression/shaders/ByteIO.glsl
+       layers/decompression/shaders/GInflate.glsl
+       layers/decompression/shaders/TileDecoder.glsl
+       layers/decompression/shaders/Utils.glsl
+       layers/decompression/shaders/compile.bat
+       layers/decompression/shaders/compile.sh
+       layers/decompression/shaders/copyCount.glsl
+       layers/decompression/shaders/spirv/*
        layers/hash_table.cpp
        layers/hash_table.h
        layers/list.h
+       layers/shader_object/generated/shader_object_constants.h
+       layers/shader_object/generated/shader_object_create_device_feature_structs.inl
+       layers/shader_object/generated/shader_object_device_data_declare_extension_variables.inl
+       layers/shader_object/generated/shader_object_device_data_dynamic_state_adding.inl
+       layers/shader_object/generated/shader_object_device_data_set_extension_variables.inl
+       layers/shader_object/generated/shader_object_entry_points_x_macros.inl
+       layers/shader_object/generated/shader_object_find_intercepted_dynamic_state_function_by_name.inl
+       layers/shader_object/generated/shader_object_full_draw_state_struct_members.cpp
+       layers/shader_object/generated/shader_object_full_draw_state_struct_members.inl
+       layers/shader_object/generated/shader_object_full_draw_state_utility_functions.inl
+       layers/shader_object/shader_object.cpp
+       layers/shader_object/shader_object_structs.h
+       layers/shader_object/shader_object_util.h
        layers/synchronization2.cpp
        layers/synchronization2.h
        layers/timeline_semaphore.c
        layers/vk_alloc.h
+       layers/vk_api_hash.h
+       layers/vk_common.h
        layers/vk_util.h
+       scripts/CMakeLists.txt
+       scripts/android.py
        scripts/check_code_format.py
-       scripts/cmake_test_min.py
+       scripts/clang-format-diff.py
        scripts/common_ci.py
-       scripts/common_codegen.py
-       scripts/dispatch_table_helper_generator.py
-       scripts/generate_source.py
-       scripts/github_ci_android.py
        scripts/github_ci_build_desktop.py
-       scripts/github_ci_check_codegen.py
-       scripts/helper_file_generator.py
-       scripts/layer_dispatch_table_generator.py
-       scripts/lvl_genvk.py
-       scripts/lvt_file_generator.py
+       scripts/shader_object_generator.py
        scripts/update_deps.py
-       scripts/utils/*
        tests/CMakeLists.txt
+       tests/android/CMakeLists.txt
+       tests/decompression_data.h
+       tests/decompression_tests.cpp
+       tests/decompression_tests.h
        tests/extension_layer_tests.cpp
        tests/extension_layer_tests.h
+       tests/shader_object_tests.cpp
        tests/synchronization2_tests.cpp
        tests/test_common.h
        tests/test_environment.cpp
@@ -60,36 +75,32 @@ Files: .github/*
        tests/vktestbinding.h
        tests/vktestframework.cpp
        tests/vktestframework.h
-       tests/vktestframeworkandroid.cpp
-       tests/vktestframeworkandroid.h
        utils/*
-Copyright: 2020-2021, Advanced Micro Devices, Inc
+Copyright: 2020-2024, Advanced Micro Devices, Inc
            2015-2022, Google Inc
            2015-2022, Google, Inc
            2019-2020, Intel Corporation
-           2014-2022, LunarG, Inc
+           2014-2024, LunarG, Inc
+           2023, NVIDIA CORPORATION & AFFILIATES
+           2023-2024, Nintendo
+           2015-2023, Nvidia Corporation
+           2023, RasterGrid Kft
            2015-2017, The Android Open Source Project
            2017, The Glslang Authors
-           2013-2022, The Khronos Group Inc
-           2014-2022, Valve Corporation
+           2013-2024, The Khronos Group Inc
+           2014-2024, Valve Corporation
            2014-2022, Valve Software
            dates for modified files
 License: Apache-2
 
-Files: cmake/Copyright_cmake.txt
-Copyright: 2011, Fredrik Höglund <fredrik@kde.org>
-           2008, Helio Chissini de Castro <helio@kde.org>
-           2000-2018, Kitware, Inc
-           2013, Martin Gräßlin <mgraesslin@kde.org>
-           2007, Matthias Kretz <kretz@kde.org>
-License: BSD-3-clause
-
 Files: docs/*
-Copyright: 2015-2022, LunarG, Inc
+Copyright: 2015-2024, LunarG, Inc
+           2023, Nvidia Corporation
+           2023, The Khronos Group Inc
 License: CC-BY-ND-4
 
 Files: debian/*
-Copyright: 2023 LunarG Inc <johnz@lunarg.com>
+Copyright: 2021-2024, LunarG Inc <johnz@lunarg.com>
 License: Apache-2.0
 
 License: Apache-2
@@ -297,19 +308,6 @@ License: Apache-2.0
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  See the License for the specific language governing permissions and
  limitations under the License.
-
-License: BSD-3-clause
- Copyright <YEAR> <COPYRIGHT HOLDER>
- .
- Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
- .
- 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
- .
- 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
- .
- 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
- .
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 License: CC-BY-ND-4
  Creative Commons Corporation (“Creative Commons”) is not a law firm and does not provide legal services or legal advice. Distribution of Creative Commons public licenses does not create a lawyer-client or other relationship. Creative Commons makes its licenses and related information available on an “as-is” basis. Creative Commons gives no warranties regarding its licenses, any material licensed under their terms and conditions, or any related information. Creative Commons disclaims all liability for damages resulting from their use to the fullest extent possible.

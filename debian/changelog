@@ -1,3 +1,16 @@
+vulkan-extensionlayer (1.4.309.0~rc1-1lunarg22.04-1) jammy; urgency=medium
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and VUL to 1.4.305
+  * build: Update Vulkan-Headers and VUL to 1.4.306
+  * build: Update Vulkan-Headers and VUL to 1.4.307
+  * build: Update to cmake 3.22.1
+  * build: Update shader dependencies to latest
+  * build: Update Vulkan-Headers and VUL to 1.4.309
+  * build: Update shader toolchain
+
+ -- john <john@odin>  Tue, 04 Mar 2025 11:11:05 -0700
+
 vulkan-extensionlayer (1.4.304.0~rc1-1lunarg22.04-1) jammy; urgency=medium
 
   [ DHrpcs3 ]

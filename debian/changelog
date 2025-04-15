@@ -1,3 +1,14 @@
+vulkan-extensionlayer (1.4.312.0~rc1-1lunarg24.04-1) noble; urgency=medium
+
+  [ Jeremy Gebben ]
+  * build: Update Vulkan-Headers and VUL to 1.4.310
+  * build: Update Vulkan-Headers and VUL to 1.4.311
+  * build: Update shader dependencies to latest
+  * build: Update Vulkan-Headers and VUL to 1.4.312
+  * build: Update shader dependencies to latest
+
+ -- john <john@odin>  Tue, 15 Apr 2025 15:49:44 -0600
+
 vulkan-extensionlayer (1.4.309.0~rc1-1lunarg24.04-1) noble; urgency=medium
 
   [ Jeremy Gebben ]

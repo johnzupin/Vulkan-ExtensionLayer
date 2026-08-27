@@ -77,6 +77,10 @@ find_package(glslang REQUIRED CONFIG QUIET)
 
 find_package(volk QUIET CONFIG)
 
+# volk re-exports the Vulkan-Headers include directory as part of its own interface, so it
+# reintroduces the /usr/local/include ordering problem worked around in the top level.
+lunarg_disable_system_include_dirs(volk::volk_headers volk::volk)
+
 target_link_libraries(vk_extension_layer_tests PRIVATE
     VkExtLayer_utils
     Vulkan::LayerSettings

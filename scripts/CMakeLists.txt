@@ -117,6 +117,22 @@ if (UPDATE_DEPS)
     endif()
 endif()
 
+# AppleClang searches /usr/local/include before any -isystem directory, so an installed
+# Vulkan SDK there wins over the headers we were pointed at. Imported targets default to
+# SYSTEM ON, which is what puts their include directories on -isystem; marking them
+# non-system emits -I instead, which is searched first.
+function(lunarg_disable_system_include_dirs)
+    if (NOT CMAKE_CXX_COMPILER_ID STREQUAL AppleClang OR CMAKE_VERSION VERSION_LESS 3.25)
+        return()
+    endif()
+
+    foreach(target_name IN LISTS ARGN)
+        if (TARGET ${target_name})
+            set_target_properties(${target_name} PROPERTIES SYSTEM OFF)
+        endif()
+    endforeach()
+endfunction()
+
 # Configure compiler build options common to all targets
 function(lunarg_target_compiler_configurations TARGET_NAME WERROR_OPTION)
     if (${WERROR_OPTION})

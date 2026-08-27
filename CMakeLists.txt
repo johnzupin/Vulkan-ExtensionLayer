@@ -83,12 +83,12 @@ find_package(VulkanHeaders CONFIG)
 find_package(VulkanUtilityLibraries CONFIG)
 
 # Workaround AppleClang using the wrong headers when there are headers in /usr/local/include
-if (CMAKE_CXX_COMPILER_ID STREQUAL AppleClang AND TARGET Vulkan::Headers AND TARGET Vulkan::LayerSettings AND CMAKE_VERSION VERSION_GREATER_EQUAL 3.25)
-    set_target_properties(Vulkan::Headers PROPERTIES SYSTEM OFF)
-    set_target_properties(Vulkan::LayerSettings PROPERTIES SYSTEM OFF)
-    set_target_properties(Vulkan::UtilityHeaders PROPERTIES SYSTEM OFF)
-    set_target_properties(Vulkan::SafeStruct PROPERTIES SYSTEM OFF)
-endif()
+lunarg_disable_system_include_dirs(
+    Vulkan::Headers
+    Vulkan::LayerSettings
+    Vulkan::UtilityHeaders
+    Vulkan::SafeStruct
+)
 
 
 add_subdirectory(layers)
